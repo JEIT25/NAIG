@@ -265,31 +265,31 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
                         <div class="info-grid" style="margin-bottom: 0.5rem;">
                             <div class="form-group" style="grid-column: 1 / -1;">
                                 <label>Current Password</label>
-                                <div style="position:relative;">
-                                    <input type="password" name="current_password" id="current_password" required placeholder="Enter current password" style="padding-right:2.5rem;">
-                                    <span class="pw-toggle" data-target="current_password" style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); cursor:pointer; color:var(--text-muted);">
+                                <div class="password-container">
+                                    <input type="password" name="current_password" id="current_password" required placeholder="Enter current password">
+                                    <button type="button" class="pw-toggle" data-target="current_password" aria-label="Toggle visibility">
                                         <i class="fa-solid fa-eye"></i>
-                                    </span>
+                                    </button>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label>New Password <span style="font-weight:400; font-size:0.75rem; color:var(--text-muted);">(8-25 characters)</span></label>
-                                <div style="position:relative;">
-                                    <input type="password" name="new_password" id="new_password" placeholder="Min 8 characters" style="padding-right:2.5rem;">
-                                    <span class="pw-toggle" data-target="new_password" style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); cursor:pointer; color:var(--text-muted);">
+                                <div class="password-container">
+                                    <input type="password" name="new_password" id="new_password" placeholder="Min 8 characters">
+                                    <button type="button" class="pw-toggle" data-target="new_password" aria-label="Toggle visibility">
                                         <i class="fa-solid fa-eye"></i>
-                                    </span>
+                                    </button>
                                 </div>
                                 <div id="pwStrength" style="display:none; margin-top:0.35rem; font-size:0.8rem; font-weight:600;"></div>
                                 <div id="pwRequirements" style="margin-top:0.35rem; font-size:0.75rem; color:var(--text-muted); line-height:1.6;"></div>
                             </div>
                             <div class="form-group">
                                 <label>Confirm Password</label>
-                                <div style="position:relative;">
-                                    <input type="password" name="confirm_password" id="confirm_password" placeholder="Re-enter new password" style="padding-right:2.5rem;">
-                                    <span class="pw-toggle" data-target="confirm_password" style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); cursor:pointer; color:var(--text-muted);">
+                                <div class="password-container">
+                                    <input type="password" name="confirm_password" id="confirm_password" placeholder="Re-enter new password">
+                                    <button type="button" class="pw-toggle" data-target="confirm_password" aria-label="Toggle visibility">
                                         <i class="fa-solid fa-eye"></i>
-                                    </span>
+                                    </button>
                                 </div>
                                 <div id="pwMatch" style="display:none; margin-top:0.35rem; font-size:0.8rem; font-weight:600;"></div>
                             </div>
@@ -349,10 +349,10 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
                 const icon = toggle.querySelector('i');
                 if (input.type === 'password') {
                     input.type = 'text';
-                    icon.className = 'fa-solid fa-eye-slash';
+                    icon.classList.replace('fa-eye', 'fa-eye-slash');
                 } else {
                     input.type = 'password';
-                    icon.className = 'fa-solid fa-eye';
+                    icon.classList.replace('fa-eye-slash', 'fa-eye');
                 }
             });
         });

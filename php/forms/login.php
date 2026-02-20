@@ -193,15 +193,33 @@ exit;
             <div id="fpQuestionsContainer">
                 <div class="form-group">
                     <label id="fpQLabel1">Question 1</label>
-                    <input type="password" id="fpAns1" placeholder="Your answer">
+                    <div class="input-with-icon">
+                        <i class="fa-solid fa-shield-halved input-icon"></i>
+                        <input type="password" id="fpAns1" placeholder="Your answer">
+                        <button type="button" class="password-toggle fp-toggle" aria-label="Toggle visibility">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label id="fpQLabel2">Question 2</label>
-                    <input type="password" id="fpAns2" placeholder="Your answer">
+                    <div class="input-with-icon">
+                        <i class="fa-solid fa-shield-halved input-icon"></i>
+                        <input type="password" id="fpAns2" placeholder="Your answer">
+                        <button type="button" class="password-toggle fp-toggle" aria-label="Toggle visibility">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label id="fpQLabel3">Question 3</label>
-                    <input type="password" id="fpAns3" placeholder="Your answer">
+                    <div class="input-with-icon">
+                        <i class="fa-solid fa-shield-halved input-icon"></i>
+                        <input type="password" id="fpAns3" placeholder="Your answer">
+                        <button type="button" class="password-toggle fp-toggle" aria-label="Toggle visibility">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -217,13 +235,25 @@ exit;
 
             <div class="form-group">
                 <label for="fpNewPass">New Password</label>
-                <input type="password" id="fpNewPass" placeholder="Enter new password" minlength="8">
+                <div class="input-with-icon">
+                    <i class="fa-solid fa-lock input-icon"></i>
+                    <input type="password" id="fpNewPass" placeholder="Enter new password" minlength="8">
+                    <button type="button" class="password-toggle fp-toggle" aria-label="Toggle visibility">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
                 <span id="fpPwStrength" style="font-size: 0.8rem; margin-top: 5px; display: block;"></span>
             </div>
 
             <div class="form-group">
                 <label for="fpConfirmPass">Confirm Password</label>
-                <input type="password" id="fpConfirmPass" placeholder="Confirm new password" minlength="8">
+                <div class="input-with-icon">
+                    <i class="fa-solid fa-lock input-icon"></i>
+                    <input type="password" id="fpConfirmPass" placeholder="Confirm new password" minlength="8">
+                    <button type="button" class="password-toggle fp-toggle" aria-label="Toggle visibility">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
                 <span id="fpPwMatch" style="font-size: 0.8rem; margin-top: 5px; display: block;"></span>
             </div>
 

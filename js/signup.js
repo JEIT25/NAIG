@@ -731,14 +731,24 @@ function displayPasswordStrength(form) {
 
 // --- Original Event Listeners (Modified) ---
 
-togglePassword.addEventListener('click', function () {
-    const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-    password.setAttribute('type', type);
-});
+// --- Universal Password Toggle Logic ---
+document.addEventListener('click', (e) => {
+    const toggleBtn = e.target.closest('.eye-icon-btn');
+    if (!toggleBtn) return;
 
-toggleRePassword.addEventListener('click', function () {
-    const type = repassword.getAttribute('type') === 'password' ? 'text' : 'password';
-    repassword.setAttribute('type', type);
+    const container = toggleBtn.closest('.password-container');
+    if (!container) return;
+
+    const input = container.querySelector('input');
+    const icon = toggleBtn.querySelector('i');
+
+    if (input && icon) {
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+
+        icon.classList.toggle('fa-eye', !isPassword);
+        icon.classList.toggle('fa-eye-slash', isPassword);
+    }
 });
 
 registerForm.elements.password.addEventListener('input', (e) => {

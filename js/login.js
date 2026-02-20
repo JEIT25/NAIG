@@ -16,11 +16,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginBtn = document.getElementById('loginBtn');
     const togglePassword = document.getElementById('togglePassword');
 
-    // ===== Password Toggle =====
-    if (togglePassword) {
-        togglePassword.addEventListener('click', () => {
-            const pwInput = document.getElementById('password');
-            const icon = togglePassword.querySelector('i');
+    // ===== Universal Password Toggle =====
+    document.addEventListener('click', (e) => {
+        const toggleBtn = e.target.closest('.password-toggle');
+        if (!toggleBtn) return;
+
+        // Find the input in the same input-with-icon container
+        const inputWithIcon = toggleBtn.closest('.input-with-icon');
+        if (!inputWithIcon) return;
+
+        const pwInput = inputWithIcon.querySelector('input');
+        const icon = toggleBtn.querySelector('i');
+
+        if (pwInput && icon) {
             if (pwInput.type === 'password') {
                 pwInput.type = 'text';
                 icon.classList.remove('fa-eye');
@@ -30,8 +38,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 icon.classList.remove('fa-eye-slash');
                 icon.classList.add('fa-eye');
             }
-        });
-    }
+        }
+    });
 
     // ===== Lockout Logic =====
     function showLockout(failedAttempts, lockoutTime) {

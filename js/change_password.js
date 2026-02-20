@@ -12,21 +12,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const bodyElement = document.body; // Get the body element
 
     // --- Password Toggle (Eye Icon) Logic ---
-    function setupPasswordToggle(toggleId, inputId) {
-        const toggleElement = document.getElementById(toggleId);
-        const inputElement = document.getElementById(inputId);
+    document.addEventListener('click', (e) => {
+        const toggleBtn = e.target.closest('.eye-icon-btn');
+        if (!toggleBtn) return;
 
-        if (toggleElement && inputElement) {
-            toggleElement.addEventListener('click', () => {
-                const isPasswordVisible = inputElement.type === 'text';
-                inputElement.type = isPasswordVisible ? 'password' : 'text';
-                toggleElement.style.fill = isPasswordVisible ? 'none' : 'currentColor';
-            });
+        const container = toggleBtn.closest('.password-container');
+        if (!container) return;
+
+        const input = container.querySelector('input');
+        const icon = toggleBtn.querySelector('i');
+
+        if (input && icon) {
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+
+            icon.classList.toggle('fa-eye', !isPassword);
+            icon.classList.toggle('fa-eye-slash', isPassword);
         }
-    }
-
-    setupPasswordToggle('togglePassword1', 'new_password');
-    setupPasswordToggle('togglePassword2', 'confirm_password');
+    });
 
     // --- Password Strength Checker Logic ---
     function checkPasswordStrength(password) {

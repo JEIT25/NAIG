@@ -37,7 +37,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($new_password !== $confirm_password) {
             $errorMessage = "Passwords do not match.";
-        } else {
+        }
+        else {
             $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
 
             $stmt = null;
@@ -51,16 +52,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->bind_param("ss", $hashed_password, $username);
                 $redirectTarget = getBaseUrl() . '/php/auth/dashboard.php';
 
-                // 2. Logged in user (New session style)
-            } elseif (isset($_SESSION['user']['username'])) {
+            // 2. Logged in user (New session style)
+            }
+            elseif (isset($_SESSION['user']['username'])) {
                 $username = $_SESSION['user']['username'];
                 $query = "UPDATE users SET password = ? WHERE username = ?";
                 $stmt = $conn->prepare($query);
                 $stmt->bind_param("ss", $hashed_password, $username);
                 $redirectTarget = getBaseUrl() . '/php/auth/dashboard.php';
 
-                // 3. Forgot Password Flow (THE FIX: Update by ID)
-            } elseif (isset($_SESSION['reset_user_id']) && isset($_SESSION['allow_password_reset'])) {
+            // 3. Forgot Password Flow (THE FIX: Update by ID)
+            }
+            elseif (isset($_SESSION['reset_user_id']) && isset($_SESSION['allow_password_reset'])) {
                 $userId = $_SESSION['reset_user_id'];
                 $query = "UPDATE users SET password = ? WHERE id = ?";
                 $stmt = $conn->prepare($query);
@@ -88,11 +91,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     header("Location: change_password.php");
                     exit();
 
-                } else {
+                }
+                else {
                     $errorMessage = "Error updating password. Please try again.";
                 }
                 $stmt->close();
-            } else {
+            }
+            else {
                 $errorMessage = "Session expired or unauthorized request. Please login again.";
             }
         }
@@ -120,7 +125,8 @@ if ($user) {
 <body data-show-modal="<?php echo $showSuccessModal ? 'true' : 'false'; ?>"
     data-redirect-url="<?php echo htmlspecialchars($redirectUrl); ?>">
 <?php if ($user): ?>
-    <?php $showSidebarToggle = true; include __DIR__ . '/../includes/layout/navbar.php'; ?>
+    <?php $showSidebarToggle = true;
+    include __DIR__ . '/../includes/layout/navbar.php'; ?>
     <div class="dashboard-container">
         <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
         <?php include __DIR__ . '/../includes/layout/sidebar.php'; ?>
@@ -136,9 +142,9 @@ if ($user) {
                             <label for="new_password">New Password:</label>
                             <div class="password-container">
                                 <input type="password" id="new_password" name="new_password" required autocomplete="new-password">
-                                <svg id="togglePassword1" class="eye-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                                    <path d="M1 12s4.5-8 11-8 11 8 11 8-4.5 8-11 8S1 12 1 12z" /><circle cx="12" cy="12" r="3" />
-                                </svg>
+                                <button type="button" class="eye-icon-btn" id="togglePassword1" aria-label="Toggle password visibility">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
                             </div>
                             <span id="pwStrength" class="userValidationMess"></span>
                         </div>
@@ -146,9 +152,9 @@ if ($user) {
                             <label for="confirm_password">Confirm New Password:</label>
                             <div class="password-container">
                                 <input type="password" id="confirm_password" name="confirm_password" required autocomplete="new-password">
-                                <svg id="togglePassword2" class="eye-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                                    <path d="M1 12s4.5-8 11-8 11 8 11 8-4.5 8-11 8S1 12 1 12z" /><circle cx="12" cy="12" r="3" />
-                                </svg>
+                                <button type="button" class="eye-icon-btn" id="togglePassword2" aria-label="Toggle password visibility">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
                             </div>
                             <span id="pwMatch" class="userValidationMess<?php echo !empty($errorMessage) ? ' is-visible' : ''; ?>"><?php echo htmlspecialchars($errorMessage, ENT_QUOTES, 'UTF-8'); ?></span>
                         </div>
@@ -160,7 +166,8 @@ if ($user) {
         <?php include __DIR__ . '/../includes/layout/footer.php'; ?>
     </div>
     <script>(function(){ var o=document.getElementById('sidebarOverlay'),t=document.getElementById('sidebarToggle'); if(t&&o){ t.addEventListener('click',function(){ document.body.classList.toggle('sidebar-open'); o.classList.toggle('is-open',document.body.classList.contains('sidebar-open')); }); o.addEventListener('click',function(){ document.body.classList.remove('sidebar-open'); o.classList.remove('is-open'); }); } })();</script>
-<?php else: ?>
+<?php
+else: ?>
     <nav class="navbar">
         <div class="navbar-left">
             <img src="../../images/logo4.png" alt="FoodGrab logo" class="logo">
@@ -182,9 +189,9 @@ if ($user) {
                         <label for="new_password">New Password:</label>
                         <div class="password-container">
                             <input type="password" id="new_password" name="new_password" required autocomplete="new-password">
-                            <svg id="togglePassword1" class="eye-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                                <path d="M1 12s4.5-8 11-8 11 8 11 8-4.5 8-11 8S1 12 1 12z" /><circle cx="12" cy="12" r="3" />
-                            </svg>
+                            <button type="button" class="eye-icon-btn" id="togglePassword1_alt" aria-label="Toggle password visibility">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
                         </div>
                         <span id="pwStrength" class="userValidationMess"></span>
                     </div>
@@ -192,9 +199,9 @@ if ($user) {
                         <label for="confirm_password">Confirm New Password:</label>
                         <div class="password-container">
                             <input type="password" id="confirm_password" name="confirm_password" required autocomplete="new-password">
-                            <svg id="togglePassword2" class="eye-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                                <path d="M1 12s4.5-8 11-8 11 8 11 8-4.5 8-11 8S1 12 1 12z" /><circle cx="12" cy="12" r="3" />
-                            </svg>
+                            <button type="button" class="eye-icon-btn" id="togglePassword2_alt" aria-label="Toggle password visibility">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
                         </div>
                         <span id="pwMatch" class="userValidationMess<?php echo !empty($errorMessage) ? ' is-visible' : ''; ?>"><?php echo htmlspecialchars($errorMessage, ENT_QUOTES, 'UTF-8'); ?></span>
                     </div>
@@ -203,7 +210,8 @@ if ($user) {
             </div>
         </div>
     </main>
-<?php endif; ?>
+<?php
+endif; ?>
 
     <div id="successModal" class="modal-simple-alert">
         <div class="modal-simple-alert-content success"> <svg class="success-icon" width="3.3em" height="3.3em"
@@ -236,7 +244,8 @@ if ($user) {
     <footer>
         <div class="footer-bottom"><p>All rights reserved &copy; 2026</p></div>
     </footer>
-<?php endif; ?>
+<?php
+endif; ?>
     <script src="<?php echo isset($basePath) ? $basePath : '../../'; ?>js/serve_asset.php?file=change_password.js"></script>
 </body>
 </html>

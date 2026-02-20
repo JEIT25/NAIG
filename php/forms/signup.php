@@ -193,10 +193,9 @@
                                 <label for="password">Password <span class="required">*</span></label>
                                 <div class="password-container">
                                     <input type="password" id="password" name="password" placeholder="" autocomplete="new-password">
-                                    <svg id="togglePassword" class="eye-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                        <circle cx="12" cy="12" r="3"></circle>
-                                    </svg>
+                                    <button type="button" class="eye-icon-btn" id="togglePassword" aria-label="Toggle visibility">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
                                 </div>
                                 <span id="pwStrength"></span>
                                 <span class="validation-message" id="passwordError"></span>
@@ -205,10 +204,9 @@
                                 <label for="repassword">Re-enter Password <span class="required">*</span></label>
                                 <div class="password-container">
                                     <input type="password" id="repassword" name="repassword" placeholder="" autocomplete="new-password">
-                                    <svg id="toggleRePassword" class="eye-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                        <circle cx="12" cy="12" r="3"></circle>
-                                    </svg>
+                                    <button type="button" class="eye-icon-btn" id="toggleRePassword" aria-label="Toggle visibility">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
                                 </div>
                                 <span id="pwMatch"></span>
                                 <span class="validation-message" id="repasswordError"></span>
@@ -235,7 +233,12 @@
                             </div>
                             <div class="form-group">
                                 <label for="secure_answer">Your Answer 1 <span class="required">*</span></label>
-                                <input type="password" id="secure_answer" name="secure_answer" placeholder="Enter your answer">
+                                <div class="password-container">
+                                    <input type="password" id="secure_answer" name="secure_answer" placeholder="Enter your answer">
+                                    <button type="button" class="eye-icon-btn" aria-label="Toggle visibility">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                </div>
                                 <span class="validation-message" id="secure_answerError"></span>
                             </div>
                             <div class="form-group">
@@ -252,7 +255,12 @@
                             </div>
                             <div class="form-group">
                                 <label for="secure_answer2">Your Answer 2 <span class="required">*</span></label>
-                                <input type="password" id="secure_answer2" name="secure_answer2" placeholder="Enter your answer">
+                                <div class="password-container">
+                                    <input type="password" id="secure_answer2" name="secure_answer2" placeholder="Enter your answer">
+                                    <button type="button" class="eye-icon-btn" aria-label="Toggle visibility">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                </div>
                                 <span class="validation-message" id="secure_answer2Error"></span>
                             </div>
                             <div class="form-group">
@@ -269,8 +277,13 @@
                             </div>
                             <div class="form-group">
                                 <label for="secure_answer3">Your Answer 3 <span class="required">*</span></label>
-                                <input type="password" id="secure_answer3" name="secure_answer3" placeholder="Enter your answer">
-                                <span class="validation-message" id="secure_answer3Error"></span>
+                                <div class="password-container">
+                                    <input type="password" id="secure_answer3" name="secure_answer3" placeholder="Enter your answer">
+                                    <button type="button" class="eye-icon-btn" aria-label="Toggle visibility">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                </div>
+                                <span class="validation-message" id="secure_answerError"></span>
                             </div>
                         </div>
                     </div>

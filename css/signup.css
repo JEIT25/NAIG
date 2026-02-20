@@ -289,24 +289,7 @@
     display: none;
 }
 
-/* Password container */
-.signup-form .password-container {
-    position: relative;
-}
-.signup-form .password-container .eye-icon {
-    position: absolute;
-    right: 0.85rem;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-    color: var(--text-muted);
-    transition: color 0.2s;
-}
-.signup-form .password-container .eye-icon:hover {
-    color: var(--text-main);
-}
+/* Strength meter */
 
 /* Strength meter */
 #pwStrength {

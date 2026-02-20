@@ -100,17 +100,32 @@ endif; ?>
             <form method="POST" class="forgot-form">
                 <div class="form-group">
                     <label><?php echo htmlspecialchars($user_questions['secure_quest1']); ?></label>
-                    <input type="password" name="ans1" required placeholder="Your answer">
+                    <div class="password-container">
+                        <input type="password" name="ans1" id="ans1" required placeholder="Your answer">
+                        <button type="button" class="password-toggle" data-target="ans1" aria-label="Toggle visibility">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label><?php echo htmlspecialchars($user_questions['secure_quest2']); ?></label>
-                    <input type="password" name="ans2" required placeholder="Your answer">
+                    <div class="password-container">
+                        <input type="password" name="ans2" id="ans2" required placeholder="Your answer">
+                        <button type="button" class="password-toggle" data-target="ans2" aria-label="Toggle visibility">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label><?php echo htmlspecialchars($user_questions['secure_quest3']); ?></label>
-                    <input type="password" name="ans3" required placeholder="Your answer">
+                    <div class="password-container">
+                        <input type="password" name="ans3" id="ans3" required placeholder="Your answer">
+                        <button type="button" class="password-toggle" data-target="ans3" aria-label="Toggle visibility">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <button type="submit" class="btn-primary">Verify Answers</button>
@@ -125,5 +140,22 @@ endif; ?>
             <p>All rights reserved &copy; 2026</p>
         </div>
     </footer>
+    <script>
+        document.querySelectorAll('.password-toggle').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const input = document.getElementById(targetId);
+                const icon = this.querySelector('i');
+
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.replace('fa-eye', 'fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.replace('fa-eye-slash', 'fa-eye');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

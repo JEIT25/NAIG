@@ -168,15 +168,33 @@
                 <!-- Questions will be loaded here via JS -->
                 <div class="form-group" style="text-align: left; margin-bottom: 15px;">
                     <label id="fpQLabel1" style="font-size: 0.85rem; color: #64748b; margin-bottom: 5px; display: block;">Question 1</label>
-                    <input type="password" id="fpAns1" class="form-control" placeholder="Your answer">
+                    <div class="input-with-icon">
+                        <i class="fa-solid fa-shield-halved input-icon"></i>
+                        <input type="password" id="fpAns1" class="form-control" placeholder="Your answer">
+                        <button type="button" class="password-toggle fp-toggle" aria-label="Toggle visibility">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="form-group" style="text-align: left; margin-bottom: 15px;">
                     <label id="fpQLabel2" style="font-size: 0.85rem; color: #64748b; margin-bottom: 5px; display: block;">Question 2</label>
-                    <input type="password" id="fpAns2" class="form-control" placeholder="Your answer">
+                    <div class="input-with-icon">
+                        <i class="fa-solid fa-shield-halved input-icon"></i>
+                        <input type="password" id="fpAns2" class="form-control" placeholder="Your answer">
+                        <button type="button" class="password-toggle fp-toggle" aria-label="Toggle visibility">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="form-group" style="text-align: left; margin-bottom: 15px;">
                     <label id="fpQLabel3" style="font-size: 0.85rem; color: #64748b; margin-bottom: 5px; display: block;">Question 3</label>
-                    <input type="password" id="fpAns3" class="form-control" placeholder="Your answer">
+                    <div class="input-with-icon">
+                        <i class="fa-solid fa-shield-halved input-icon"></i>
+                        <input type="password" id="fpAns3" class="form-control" placeholder="Your answer">
+                        <button type="button" class="password-toggle fp-toggle" aria-label="Toggle visibility">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -195,6 +213,9 @@
                 <div class="input-with-icon">
                     <i class="fa-solid fa-lock input-icon"></i>
                     <input type="password" id="fpNewPass" placeholder="Enter new password" minlength="8">
+                    <button type="button" class="password-toggle fp-toggle" aria-label="Toggle visibility">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
                 </div>
                 <span id="fpPwStrength" style="font-size: 0.8rem; margin-top: 5px; display: block;"></span>
             </div>
@@ -204,6 +225,9 @@
                 <div class="input-with-icon">
                     <i class="fa-solid fa-lock input-icon"></i>
                     <input type="password" id="fpConfirmPass" placeholder="Confirm new password" minlength="8">
+                    <button type="button" class="password-toggle fp-toggle" aria-label="Toggle visibility">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
                 </div>
                 <span id="fpPwMatch" style="font-size: 0.8rem; margin-top: 5px; display: block;"></span>
             </div>
