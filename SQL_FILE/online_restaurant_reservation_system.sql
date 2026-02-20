@@ -7,8 +7,8 @@ SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+08:00";
 
-CREATE DATABASE IF NOT EXISTS `online_food_delivery_system` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-USE `online_food_delivery_system`;
+CREATE DATABASE IF NOT EXISTS `naig_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE `naig_db`;
 
 -- =====================================================
 -- TABLE: users
@@ -54,6 +54,9 @@ CREATE TABLE `password_reset_otp` (
   `otp_code` varchar(10) NOT NULL,
   `expires_at` datetime NOT NULL,
   `used` tinyint(1) NOT NULL DEFAULT 0,
+  `resend_count` int(11) DEFAULT 0,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `last_resend_at` datetime DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
