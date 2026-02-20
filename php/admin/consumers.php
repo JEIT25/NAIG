@@ -282,7 +282,12 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
         }
 
         const privileges = {
-            'consumer': ['Place Orders', 'View Order History', 'View Profile Information', 'Change Account Password', 'Add Favorites']
+            'consumer': [
+                'View restaurants',
+                'Book reservation',
+                'View reservation history',
+                'View my profile and change password'
+            ]
         };
 
         function viewPrivileges(role, name) {

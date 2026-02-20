@@ -114,7 +114,7 @@ if ($isFormSubmission) {
                 // Log successful login
                 logUserAction($user['id'], 'login');
 
-                $base = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/DAMALERIO';
+                $base = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/NAIG';
 
                 // Role-based redirection
                 if ($user['role'] === 'admin') {
@@ -159,7 +159,7 @@ else {
     }
 
     // Path to .htaccess in the /forms/ directory
-    $htaccessPath = $_SERVER['DOCUMENT_ROOT'] . '/DAMALERIO/php/forms/.htaccess';
+    $htaccessPath = $_SERVER['DOCUMENT_ROOT'] . '/NAIG/php/forms/.htaccess';
 
     // Restrict access
     if ($_POST['isRegisterRestrict'] === 'true') {

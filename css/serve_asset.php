@@ -4,29 +4,36 @@ $referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
 
 // Define an array of valid referers (host-specific and path-only for flexibility)
 $validReferers = [
-    'http://localhost/DAMALERIO/php/forms/',
-    'http://localhost/DAMALERIO/php/admin/',
-    'http://localhost/DAMALERIO/php/superadmin/',
-    'http://localhost/DAMALERIO/php/auth/',
-    'http://localhost/DAMALERIO/php/pages/',
-    'http://127.0.0.1/DAMALERIO/php/forms/',
-    'http://127.0.0.1/DAMALERIO/php/admin/',
-    'http://127.0.0.1/DAMALERIO/php/superadmin/',
-    'http://127.0.0.1/DAMALERIO/php/auth/',
-    'http://127.0.0.1/DAMALERIO/php/pages/',
-    '/DAMALERIO/php/forms/',
-    '/DAMALERIO/php/admin/',
-    '/DAMALERIO/php/superadmin/',
-    '/DAMALERIO/php/auth/',
-    '/DAMALERIO/php/pages/',
+    'http://localhost/NAIG/php/forms/',
+    'http://localhost/NAIG/php/admin/',
+    'http://localhost/NAIG/php/superadmin/',
+    'http://localhost/NAIG/php/auth/',
+    'http://localhost/NAIG/php/pages/',
+    'http://127.0.0.1/NAIG/php/forms/',
+    'http://127.0.0.1/NAIG/php/admin/',
+    'http://127.0.0.1/NAIG/php/superadmin/',
+    'http://127.0.0.1/NAIG/php/auth/',
+    'http://127.0.0.1/NAIG/php/pages/',
+    '/NAIG/php/forms/',
+    '/NAIG/php/admin/',
+    '/NAIG/php/superadmin/',
+    '/NAIG/php/auth/',
+    '/NAIG/php/pages/',
 ];
 
 // Check if the referer matches any of the valid referers
 $refererValid = false;
-foreach ($validReferers as $validReferer) {
-    if (strpos($referer, $validReferer) !== false) {
-        $refererValid = true;
-        break;
+
+// Allow empty referer (direct access or privacy mode) to prevent 403s on valid assets
+if (empty($referer)) {
+    $refererValid = true;
+}
+else {
+    foreach ($validReferers as $validReferer) {
+        if (strpos($referer, $validReferer) !== false) {
+            $refererValid = true;
+            break;
+        }
     }
 }
 
@@ -48,10 +55,12 @@ if (isset($_GET['file'])) {
         header("Content-Type: $mimeType");
         readfile($filePath);
         exit;
-    } else {
+    }
+    else {
         http_response_code(404);
     }
-} else {
+}
+else {
     http_response_code(400);
     echo "No file specified.";
 }

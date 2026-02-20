@@ -15,9 +15,10 @@ if (!function_exists('getBasePath')) {
      * @param string $currentFile __FILE__ from the calling script
      * @return string Relative path (e.g. '../../' or '../../../')
      */
-    function getBasePath($currentFile) {
+    function getBasePath($currentFile)
+    {
         $currentDir = dirname($currentFile);
-        // Project root: from php/includes/ go up 2 levels = DAMALERIO root
+        // Project root: from php/includes/ go up 2 levels = NAIG root
         $projectRoot = realpath(dirname(__DIR__, 2));
         $currentDirReal = realpath($currentDir);
 

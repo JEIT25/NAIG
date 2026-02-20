@@ -346,9 +346,29 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
         };
 
         const privileges = {
-            'superadmin': ['Full Access', 'Manage Users & Roles', 'Approve or Reject Consumer Block Requests from Admin', 'Block Users', 'Manage Stores', 'Manage Menu Items', 'Manage Orders', 'View Login Logs'],
-            'admin': ['Manage Orders', 'Manage Stores', 'Manage Menu Items', 'Request Consumer Account Blocks', 'Manage Consumer Accounts'],
-            'consumer': ['Place Orders', 'View Order History', 'View Profile Information', 'Change Account Password', 'Add Favorites']
+            'superadmin': [
+                'Manage system restaurants',
+                'Manage restaurant tables',
+                'Manage reservations',
+                'Manage user roles and accounts (including blocking users)',
+                'View request history',
+                'View my profile and change password',
+                'Approve and block requests from admin'
+            ],
+            'admin': [
+                'Manage system restaurants',
+                'Manage restaurant tables',
+                'Manage reservations',
+                'Manage consumer accounts',
+                'View request history',
+                'View my profile and change password'
+            ],
+            'consumer': [
+                'View restaurants',
+                'Book reservation',
+                'View reservation history',
+                'View my profile and change password'
+            ]
         };
 
         function viewPrivileges(role, name) {

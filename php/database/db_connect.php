@@ -1,7 +1,7 @@
 <?php
 // Database connection parameters
 $host = 'localhost';  // or 'localhost'
-$dbname = 'online_food_delivery_system';
+$dbname = 'naig_db';
 $username = 'root';  // Default username for XAMPP
 $password = '';      // Default password for XAMPP is empty
 

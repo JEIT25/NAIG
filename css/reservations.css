@@ -1,0 +1,409 @@
+/**
+ * NAIGO Reservations — Shared styles for browse, make, my_reservations pages
+ */
+
+/* =========== Filter Bar =========== */
+.filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.25rem;
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+.filter-group { flex: 1; min-width: 180px; }
+.search-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.search-input-wrap i {
+    position: absolute;
+    left: 0.85rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+.search-input {
+    width: 100%;
+    padding: 0.6rem 0.85rem 0.6rem 2.4rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: var(--bg-main);
+    color: var(--text-body);
+    transition: border 0.2s;
+}
+.search-input:focus { outline: none; border-color: var(--primary-color); }
+.filter-select {
+    width: 100%;
+    padding: 0.6rem 0.85rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: var(--bg-main);
+    color: var(--text-body);
+    cursor: pointer;
+}
+.filter-select:focus { outline: none; border-color: var(--primary-color); }
+
+/* =========== Restaurant Grid =========== */
+.restaurant-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+.restaurant-card {
+    background: var(--bg-card);
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    transition: all 0.3s;
+}
+.restaurant-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 8px 24px rgba(26, 86, 83, 0.08);
+    transform: translateY(-4px);
+}
+.restaurant-card-img {
+    width: 100%;
+    height: 180px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f0f4f3, #e8edec);
+}
+.restaurant-card-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.restaurant-card-img .no-img {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 2.5rem;
+}
+.restaurant-card-body { padding: 1.25rem; }
+.restaurant-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+.restaurant-card-header h3 {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    margin: 0;
+    color: var(--text-heading);
+}
+.restaurant-rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.6rem;
+    background: rgba(200, 169, 81, 0.1);
+    color: #c8a951;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.restaurant-cuisine, .restaurant-address {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0.25rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.restaurant-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+}
+.restaurant-meta span { display: inline-flex; align-items: center; gap: 0.3rem; }
+.price-range {
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* =========== Reservation Form =========== */
+.reservation-form-container {
+    background: var(--bg-card);
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    padding: 2rem;
+}
+.restaurant-header {
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+.restaurant-details {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+}
+.restaurant-details span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+.reservation-form .form-group {
+    margin-bottom: 1rem;
+}
+.reservation-form label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 0.4rem;
+    color: var(--text-heading);
+}
+.reservation-form input[type="date"],
+.reservation-form input[type="time"],
+.reservation-form input[type="number"],
+.reservation-form textarea {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: var(--bg-main);
+    color: var(--text-body);
+    transition: border 0.2s;
+    box-sizing: border-box;
+}
+.reservation-form input:focus,
+.reservation-form textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* Tables grid */
+.tables-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+.table-option {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: var(--bg-main);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.table-option:hover {
+    border-color: var(--primary-color);
+    background: rgba(26, 86, 83, 0.03);
+}
+.table-option.selected {
+    border-color: var(--primary-color);
+    background: rgba(26, 86, 83, 0.06);
+    box-shadow: 0 0 0 3px rgba(26, 86, 83, 0.1);
+}
+.table-option-icon {
+    width: 42px; height: 42px;
+    border-radius: 10px;
+    background: rgba(26, 86, 83, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+}
+.table-option-info strong {
+    display: block;
+    font-size: 0.95rem;
+    color: var(--text-heading);
+}
+.table-option-info span {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: capitalize;
+}
+
+/* =========== My Reservations List =========== */
+.reservations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.reservation-card {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.25rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    transition: all 0.2s;
+}
+.reservation-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(26, 86, 83, 0.06);
+}
+.reservation-date-badge {
+    min-width: 56px;
+    text-align: center;
+    padding: 0.6rem;
+    background: var(--primary-color);
+    border-radius: 10px;
+    color: #ffffff;
+}
+.date-month {
+    display: block;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.85;
+}
+.date-day {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+.reservation-card-body {
+    flex: 1;
+    min-width: 0;
+}
+.reservation-card-body h3 {
+    font-family: var(--font-heading);
+    margin: 0 0 0.3rem;
+    font-size: 1.05rem;
+    color: var(--text-heading);
+}
+.reservation-card-body p {
+    margin: 0.15rem 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+.special-req {
+    font-style: italic;
+    opacity: 0.75;
+}
+.reservation-card-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+.btn-cancel {
+    padding: 0.35rem 0.85rem;
+    border: 1.5px solid var(--error-color);
+    background: transparent;
+    color: var(--error-color);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-cancel:hover {
+    background: var(--error-color);
+    color: #ffffff;
+}
+
+/* =========== Status Badges =========== */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    white-space: nowrap;
+}
+.status-pending {
+    background: #fef3c7;
+    color: #d97706;
+}
+.status-confirmed {
+    background: #d1fae5;
+    color: #059669;
+}
+.status-completed {
+    background: #dbeafe;
+    color: #2563eb;
+}
+.status-cancelled {
+    background: #fee2e2;
+    color: #dc2626;
+}
+.status-no_show {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+/* =========== Pagination =========== */
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+.pagination-info {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+.btn-sm {
+    padding: 0.35rem 0.85rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+}
+
+/* =========== Shared =========== */
+.loading-spinner {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-muted);
+}
+.empty-state h3 {
+    margin-bottom: 0.5rem;
+    color: var(--text-heading);
+}
+.empty-state p {
+    margin-bottom: 1rem;
+}
+
+/* =========== Responsive =========== */
+@media (max-width: 768px) {
+    .restaurant-grid { grid-template-columns: 1fr; }
+    .tables-grid { grid-template-columns: 1fr; }
+    .reservation-form-container .form-row { grid-template-columns: 1fr !important; }
+    .reservation-card { flex-direction: column; align-items: flex-start; }
+    .reservation-card-right { flex-direction: row; width: 100%; justify-content: space-between; }
+    .filter-bar { flex-direction: column; }
+}

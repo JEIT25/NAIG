@@ -1,548 +1,552 @@
+/**
+ * NAIGO Login Page — JavaScript
+ * Handles: login form submit, lockout timer, password toggle, forgot password 4-step flow
+ */
 (function () {
-    window.BASE_URL = window.BASE_URL || 'http://localhost/DAMALERIO';
+    window.BASE_URL = window.BASE_URL || 'http://localhost/NAIG';
     window.LOGIN_API = window.LOGIN_API || window.BASE_URL + '/php/database/login.php';
-    window.CHECK_ID_API = window.CHECK_ID_API || window.BASE_URL + '/php/database/check_id.php';
+    window.FORGOT_PASSWORD_API = window.FORGOT_PASSWORD_API || window.BASE_URL + '/php/database/forgot_password.php';
 })();
+
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('loginForm');
-    const modal = document.getElementById('validationModal');
-    const validationMessage = document.getElementById('validationMess');
-    const countdownElement = document.getElementById('countdown');
-    const registerLink = document.getElementById('register');
-    const homeLink = document.getElementById('home');
-    const toggleIcon = document.getElementById('togglePassword');
-    const forgotPwLink = document.querySelector('.forgot-pw');
+    const serverError = document.getElementById('serverError');
+    const passwordError = document.getElementById('passwordError');
+    const lockoutTimer = document.getElementById('lockoutTimer');
+    const loginBtn = document.getElementById('loginBtn');
+    const togglePassword = document.getElementById('togglePassword');
 
-    // *** NEW MODAL ELEMENTS ***
-    const userNotFoundModal = document.getElementById('userNotFoundModal');
-    const userNotFoundOkBtn = document.getElementById('userNotFoundOkBtn');
-
-    // Access control check (Lockout logic)
-    async function updateRegisterAccess(isRestricted) {
-        try {
-            const formData = new FormData();
-            formData.append('isForm', false);
-            formData.append('isRegisterRestrict', isRestricted);
-
-            const response = await fetch(window.LOGIN_API, {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!response.ok) {
-                console.error('Failed to update access');
+    // ===== Password Toggle =====
+    if (togglePassword) {
+        togglePassword.addEventListener('click', () => {
+            const pwInput = document.getElementById('password');
+            const icon = togglePassword.querySelector('i');
+            if (pwInput.type === 'password') {
+                pwInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                pwInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
             }
-        } catch (error) {
-            console.error('Error updating access:', error);
-        }
+        });
     }
 
-    function showModal(failedAttempts, lockoutTime) {
+    // ===== Lockout Logic =====
+    function showLockout(failedAttempts, lockoutTime) {
         localStorage.setItem('failedAttempts', failedAttempts);
-        toggleForgotPwLink(failedAttempts);
-
         if (lockoutTime > Date.now() / 1000) {
-            const remainingTime = lockoutTime - Math.floor(Date.now() / 1000);
-            countdownElement.textContent = remainingTime;
-            modal.style.display = 'flex';
-            disableFormAndRegister();
-            window.addEventListener('pointermove', disableBackButton);
-            localStorage.setItem('lockoutTime', lockoutTime);
-
-            const interval = setInterval(() => {
-                const newTime = lockoutTime - Math.floor(Date.now() / 1000);
-                countdownElement.textContent = newTime;
-                if (newTime <= 0) {
-                    clearInterval(interval);
-                    modal.style.display = 'none';
-                    enableFormAndRegister();
+            const updateTimer = () => {
+                const remaining = Math.max(0, lockoutTime - Math.floor(Date.now() / 1000));
+                if (remaining <= 0) {
+                    lockoutTimer.style.display = 'none';
+                    loginBtn.disabled = false;
                     localStorage.removeItem('lockoutTime');
-                    window.removeEventListener('pointermove', disableBackButton);
+                    clearInterval(interval);
+                    return;
                 }
-            }, 1000);
+                lockoutTimer.style.display = 'block';
+                lockoutTimer.textContent = `Too many failed attempts. Try again in ${remaining}s`;
+                loginBtn.disabled = true;
+            };
+            localStorage.setItem('lockoutTime', lockoutTime);
+            updateTimer();
+            const interval = setInterval(updateTimer, 1000);
         }
     }
 
-    function toggleForgotPwLink(failedAttempts) {
-        if (failedAttempts >= 2) {
-            forgotPwLink.style.display = 'block';
-        } else {
-            forgotPwLink.style.display = 'none';
-        }
+    // Check stored lockout on page load
+    const storedLockout = localStorage.getItem('lockoutTime');
+    if (storedLockout) {
+        showLockout(parseInt(localStorage.getItem('failedAttempts') || '0'), parseInt(storedLockout));
     }
 
-    function enableFormAndRegister() {
-        updateRegisterAccess(false);
-        form.querySelectorAll('input, button').forEach((element) => {
-            element.disabled = false;
-            if (element.type === 'submit') {
-                element.classList.remove('submitBtnDisabled');
-                element.classList.add('submitBtn');
-            }
-        });
-        registerLink.style.pointerEvents = 'auto';
-        registerLink.setAttribute('href', '../forms/signup.php');
-        registerLink.classList.remove('disabled-link');
-        registerLink.classList.add('nav-link');
-        homeLink.style.pointerEvents = 'auto';
-        homeLink.setAttribute('href', '../forms/homepage.php');
-        homeLink.classList.remove('disabled-link');
-        homeLink.classList.add('nav-link');
-        forgotPwLink.setAttribute('href', '#');
-        forgotPwLink.style.pointerEvents = 'auto';
-        forgotPwLink.classList.remove('disabled-link');
-        forgotPwLink.classList.add('forgot-pw');
-    }
-
-    const disableBackButton = () => {
-        history.pushState(null, null, location.href);
-        window.onpopstate = function () {
-            history.go(1);
-        };
-    };
-
-    function disableFormAndRegister() {
-        updateRegisterAccess(true);
-        form.querySelectorAll('input, button').forEach((element) => {
-            element.disabled = true;
-            if (element.type === 'submit') {
-                element.classList.remove('submitBtn');
-                element.classList.add('submitBtnDisabled');
-            }
-        });
-        registerLink.style.pointerEvents = 'none';
-        registerLink.classList.remove('nav-link');
-        registerLink.classList.add('disabled-link');
-        registerLink.removeAttribute('href');
-        homeLink.style.pointerEvents = 'none';
-        homeLink.classList.remove('nav-link');
-        homeLink.classList.add('disabled-link');
-        homeLink.removeAttribute('href');
-        forgotPwLink.removeAttribute('href');
-        forgotPwLink.style.pointerEvents = 'none';
-        forgotPwLink.classList.remove('forgot-pw');
-        forgotPwLink.classList.add('disabled-link');
-    }
-
-    window.togglePassword = function () {
-        const passwordInput = document.getElementById('password');
-        const isPasswordVisible = passwordInput.type === 'text';
-        passwordInput.type = isPasswordVisible ? 'password' : 'text';
-        toggleIcon.style.fill = isPasswordVisible ? 'none' : 'currentColor';
-    }
-
-    // Login Form Submit
+    // ===== Login Form Submit =====
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const usernameValidationMessage = document.getElementById('validationMess');
-        const passwordValidationMessage = document.getElementById('validationMessPw');
-
-        usernameValidationMessage.innerText = '';
-        passwordValidationMessage.innerText = '';
+        serverError.textContent = '';
+        if (passwordError) passwordError.textContent = '';
 
         const formData = new FormData(form);
         formData.append('isForm', true);
         formData.append('isRegisterRestrict', false);
 
-        const response = await fetch(window.LOGIN_API, {
-            method: 'POST',
-            body: formData,
-            credentials: 'same-origin'
-        });
-
-        const text = await response.text();
-        let data;
         try {
-            data = JSON.parse(text);
-        } catch (e) {
-            console.error('Login response not JSON:', text);
-            passwordValidationMessage.style.display = 'block';
-            passwordValidationMessage.innerText = 'Server error. Please try again.';
-            return;
-        }
+            const response = await fetch(window.LOGIN_API, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            });
+            const text = await response.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                serverError.textContent = 'Server error. Please try again.';
+                return;
+            }
 
-        if (data.requireUsername) {
-            usernameValidationMessage.style.display = 'block';
-            usernameValidationMessage.innerText = data.requireUsername;
-            showModal(data.failed_attempts, data.lockout_time);
-        }
-        if (data.requirePw) {
-            passwordValidationMessage.style.display = 'block';
-            passwordValidationMessage.innerText = data.requirePw;
-            showModal(data.failed_attempts, data.lockout_time);
-        }
-        if (data.error) {
-            passwordValidationMessage.style.display = 'block';
-            passwordValidationMessage.innerText = data.error;
-            showModal(data.failed_attempts, data.lockout_time);
-        }
-        if (data.redirect) {
-            localStorage.clear();
-            window.location.href = data.redirect;
+            if (data.redirect) {
+                localStorage.clear();
+                window.location.href = data.redirect;
+                return;
+            }
+            if (data.error) {
+                if (passwordError) passwordError.textContent = data.error;
+                else serverError.textContent = data.error;
+            }
+            if (data.requireUsername) {
+                serverError.textContent = data.requireUsername;
+            }
+            if (data.requirePw) {
+                if (passwordError) passwordError.textContent = data.requirePw;
+                else serverError.textContent = data.requirePw;
+            }
+            if (data.failed_attempts && data.lockout_time) {
+                showLockout(data.failed_attempts, data.lockout_time);
+            }
+        } catch (err) {
+            serverError.textContent = 'Network error. Please check your connection.';
         }
     });
 
-    // Page Load Init
-    const storedLockoutTime = localStorage.getItem('lockoutTime');
-    const storedFailedAttempts = localStorage.getItem('failedAttempts');
-    if (storedLockoutTime) {
-        showModal(parseInt(storedFailedAttempts || 0, 10), parseInt(storedLockoutTime, 10));
-    }
-    toggleForgotPwLink(parseInt(storedFailedAttempts || 0, 10));
+    // ===== ENHANCED FORGOT PASSWORD FLOW =====
+    const fpOverlay = document.getElementById('fpModalOverlay');
+    const fpClose = document.getElementById('fpClose');
+    // Select all potential triggers (link in auth/login.php and forms/login.php)
+    const forgotLinks = document.querySelectorAll('.forgot-link, .forgot-pw');
 
-    // --- FORGOT PASSWORD LOGIC (OTP flow when FORGOT_PASSWORD_API is set) ---
-    var modal2 = document.getElementById("forgotPasswordModal");
-    var forgotPasswordLink = document.getElementById("forgotPasswordLink");
-    var resetIdInput = document.getElementById("reset_id");
-    var displayIdSpan = document.getElementById("display_id");
-    var displayUsernameSpan = document.getElementById("display_username");
+    // State Variables
+    let fpCurrentUserId = '';
 
-    // Step 3 Variables
-    var secureQuestionLabel1 = document.getElementById("secure_question_label1");
-    var secureQuestionLabel2 = document.getElementById("secure_question_label2");
-    var secureQuestionLabel3 = document.getElementById("secure_question_label3");
-    var secureAnswer1 = document.getElementById("secure_answer1");
-    var secureAnswer2 = document.getElementById("secure_answer2");
-    var secureAnswer3 = document.getElementById("secure_answer3");
-
-    // Step 4 Variables
-    var newPwInput = document.getElementById("forgot_new_password");
-    var confirmPwInput = document.getElementById("forgot_confirm_password");
-    var pwStrengthSpan = document.getElementById("forgotPwStrength");
-    var pwMatchSpan = document.getElementById("forgotPwMatch");
-    var toggleNewPw = document.getElementById("toggleForgotNewPassword");
-    var toggleConfirmPw = document.getElementById("toggleForgotConfirmPassword");
-
-    if (userNotFoundOkBtn) {
-        userNotFoundOkBtn.onclick = function () {
-            userNotFoundModal.style.display = 'none';
-        };
+    // ID Formatting
+    const fpUserIdInput = document.getElementById('fpUserId');
+    if (fpUserIdInput) {
+        fpUserIdInput.addEventListener('input', function (e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 4) {
+                value = value.slice(0, 4) + '-' + value.slice(4, 9);
+            }
+            e.target.value = value;
+        });
     }
 
-    var closeModalEl = document.getElementById("forgotModalClose") || document.querySelector("#forgotPasswordModal .close");
-    if (closeModalEl) closeModalEl.onclick = function () { modal2.style.display = "none"; };
-    window.onclick = function (event) {
-        if (event.target === modal2) modal2.style.display = "none";
-    };
-
-    // Password Strength Checker (Step 4)
-    function checkForgotPwStrength() {
-        if (!newPwInput || !pwStrengthSpan) return;
-        var val = newPwInput.value;
-        if (val.length < 8) {
-            pwStrengthSpan.textContent = "Too short"; pwStrengthSpan.style.color = "#c00"; return;
+    // Modal Controls
+    function openFpModal() {
+        if (fpOverlay) {
+            fpOverlay.classList.add('active');
+            showFpStep('fpStep1');
+            if (fpUserIdInput) {
+                fpUserIdInput.value = '';
+                setTimeout(() => fpUserIdInput.focus(), 100);
+            }
         }
-        var score = 0;
-        if (/[A-Z]/.test(val)) score++;
-        if (/[a-z]/.test(val)) score++;
-        if (/\d/.test(val)) score++;
-        if (/[^A-Za-z0-9]/.test(val)) score++;
+    }
+
+    function closeFpModal() {
+        if (fpOverlay) fpOverlay.classList.remove('active');
+    }
+
+    if (forgotLinks.length > 0) {
+        forgotLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                openFpModal();
+            });
+        });
+    }
+
+    if (fpClose) fpClose.addEventListener('click', closeFpModal);
+    if (fpOverlay) {
+        fpOverlay.addEventListener('click', (e) => {
+            if (e.target === fpOverlay) closeFpModal();
+        });
+    }
+
+    // Step Navigation
+    function showFpStep(stepId) {
+        document.querySelectorAll('.fp-step').forEach(el => el.classList.remove('active'));
+        const step = document.getElementById(stepId);
+        if (step) step.classList.add('active');
+        // Clear errors
+        ['fpStep1Error', 'fpStep3Error', 'fpStep4Error', 'fpStep5Error'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = '';
+        });
+    }
+
+    // --- STEP 1: Verify ID ---
+    const fpStep1Btn = document.getElementById('fpStep1Btn');
+    if (fpStep1Btn) {
+        fpStep1Btn.addEventListener('click', async () => {
+            const id = fpUserIdInput.value.trim();
+            const errEl = document.getElementById('fpStep1Error');
+
+            if (id.length < 9) {
+                errEl.textContent = 'Please enter a valid ID (Format: XXXX-XXXX)';
+                return;
+            }
+
+            fpStep1Btn.disabled = true;
+            fpStep1Btn.textContent = 'Verifying...';
+
+            const fd = new FormData();
+            fd.append('user_id', id);
+
+            try {
+                // Adjust path based on where login.js is called
+                // It's called from php/auth/login.php or php/forms/login.php
+                // Both are effectively 1 level deep from root PHP folders relative to assets?
+                // Actually server_asset.php serves this. baseUrl is defined at top.
+                // But let's use relative path assumption from the PHP file location
+                const apiUrl = window.BASE_URL + '/php/forms/action_get_user_info.php';
+
+                const res = await fetch(apiUrl, { method: 'POST', body: fd });
+                const data = await res.json();
+
+                if (data.success) {
+                    fpCurrentUserId = data.user.id;
+                    const infoBox = document.getElementById('fpUserInfo');
+                    infoBox.innerHTML = `
+                        <p style="margin:5px 0"><strong>ID:</strong> ${data.user.id}</p>
+                        <p style="margin:5px 0"><strong>Name:</strong> ${data.user.name}</p>
+                        <p style="margin:5px 0"><strong>Email:</strong> ${data.user.email}</p>
+                    `;
+                    showFpStep('fpStep2');
+                } else {
+                    errEl.textContent = data.message || 'ID not found.';
+                }
+            } catch (e) {
+                console.error(e);
+                errEl.textContent = 'Network error. Please try again.';
+            } finally {
+                fpStep1Btn.disabled = false;
+                fpStep1Btn.textContent = 'VERIFY IDENTITY';
+            }
+        });
+    }
+
+    // --- STEP 2: Confirm & Send OTP ---
+    const fpStep2Btn = document.getElementById('fpStep2Btn');
+    const fpStep2Back = document.getElementById('fpStep2Back');
+
+    if (fpStep2Back) {
+        fpStep2Back.addEventListener('click', () => showFpStep('fpStep1'));
+    }
+
+    if (fpStep2Btn) {
+        fpStep2Btn.addEventListener('click', async () => {
+            fpStep2Btn.disabled = true;
+            fpStep2Btn.textContent = 'Sending...';
+
+            try {
+                const apiUrl = window.BASE_URL + '/php/forms/forgot_password_send_otp.php';
+                const res = await fetch(apiUrl, { method: 'POST' });
+                const text = await res.text(); // Get raw text first
+
+                try {
+                    const data = JSON.parse(text); // Try parsing
+                    if (data.success) {
+                        showFpStep('fpStep3');
+                        startFpTimer();
+                    } else {
+                        alert(data.message || 'Failed to send OTP.');
+                    }
+                } catch (e) {
+                    console.error("JSON Parse Error. Raw response:", text);
+                    alert('Server error: Invalid response format. See console for details.');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Network error. Check console for details.');
+            } finally {
+                fpStep2Btn.disabled = false;
+                fpStep2Btn.textContent = 'YES, SEND CODE';
+            }
+        });
+    }
+
+    // --- STEP 3: Verify OTP ---
+    const fpStep3Btn = document.getElementById('fpStep3Btn');
+    if (fpStep3Btn) {
+        fpStep3Btn.addEventListener('click', async () => {
+            const otpInput = document.getElementById('fpOtp');
+            const otp = otpInput.value.trim();
+            const errEl = document.getElementById('fpStep3Error');
+
+            if (otp.length !== 6) {
+                errEl.textContent = 'Please enter the 6-digit code.';
+                return;
+            }
+
+            fpStep3Btn.disabled = true;
+            fpStep3Btn.textContent = 'Verifying...';
+
+            const fd = new FormData();
+            fd.append('otp_code', otp);
+
+            try {
+                const apiUrl = window.BASE_URL + '/php/forms/forgot_password_verify_otp.php';
+                const res = await fetch(apiUrl, { method: 'POST', body: fd });
+                const data = await res.json();
+
+                if (data.success) {
+                    // Fetch security questions before showing Step 4
+                    fetchSecurityQuestions();
+                } else {
+                    errEl.textContent = data.message || 'Invalid code.';
+                }
+            } catch (e) {
+                errEl.textContent = 'Network error.';
+            } finally {
+                fpStep3Btn.disabled = false;
+                fpStep3Btn.textContent = 'VERIFY CODE';
+            }
+        });
+    }
+
+    async function fetchSecurityQuestions() {
+        const errEl = document.getElementById('fpStep3Error');
+        try {
+            const apiUrl = window.BASE_URL + '/php/forms/action_get_security_questions.php';
+            const res = await fetch(apiUrl);
+            const data = await res.json();
+
+            if (data.success) {
+                document.getElementById('fpQLabel1').textContent = data.questions[0];
+                document.getElementById('fpQLabel2').textContent = data.questions[1];
+                document.getElementById('fpQLabel3').textContent = data.questions[2];
+                showFpStep('fpStep4');
+            } else {
+                errEl.textContent = data.message || 'Failed to load security questions.';
+            }
+        } catch (e) {
+            errEl.textContent = 'Network error loading questions.';
+        }
+    }
+
+    // --- STEP 4: Verify Security Answers ---
+    const fpStep4Btn = document.getElementById('fpStep4Btn');
+    if (fpStep4Btn) {
+        fpStep4Btn.addEventListener('click', async () => {
+            const ans1 = document.getElementById('fpAns1').value.trim();
+            const ans2 = document.getElementById('fpAns2').value.trim();
+            const ans3 = document.getElementById('fpAns3').value.trim();
+            const errEl = document.getElementById('fpStep4Error');
+
+            if (!ans1 || !ans2 || !ans3) {
+                errEl.textContent = 'Please answer all questions.';
+                return;
+            }
+
+            fpStep4Btn.disabled = true;
+            fpStep4Btn.textContent = 'Verifying...';
+
+            const fd = new FormData();
+            fd.append('secure_answer', ans1);
+            fd.append('secure_answer2', ans2);
+            fd.append('secure_answer3', ans3);
+
+            try {
+                const apiUrl = window.BASE_URL + '/php/forms/action_verify_security_answers.php';
+                const res = await fetch(apiUrl, { method: 'POST', body: fd });
+                const data = await res.json();
+
+                if (data.success) {
+                    showFpStep('fpStep5');
+                } else {
+                    errEl.textContent = data.message || 'Incorrect answers.';
+                }
+            } catch (e) {
+                errEl.textContent = 'Network error.';
+            } finally {
+                fpStep4Btn.disabled = false;
+                fpStep4Btn.textContent = 'VERIFY ANSWERS';
+            }
+        });
+    }
+
+    // --- STEP 5: Reset Password ---
+    const fpStep5Btn = document.getElementById('fpStep5Btn');
+    const fpNewPass = document.getElementById('fpNewPass');
+    const fpConfirmPass = document.getElementById('fpConfirmPass');
+    const fpPwStrength = document.getElementById('fpPwStrength');
+    const fpPwMatch = document.getElementById('fpPwMatch');
+
+    function displayFpPasswordStrength(val) {
+        if (!fpPwStrength) return;
+
+        if (val.length < 8) {
+            fpPwStrength.innerText = '';
+            return;
+        }
+
+        let hasUppercase = /[A-Z]/.test(val);
+        let hasLowercase = /[a-z]/.test(val);
+        let hasNumber = /\d/.test(val);
+        let hasSpecialChar = /[^A-Za-z0-9]/.test(val);
+
+        let score = 0;
+        if (hasUppercase) score++;
+        if (hasLowercase) score++;
+        if (hasNumber) score++;
+        if (hasSpecialChar) score++;
 
         if (score === 4) {
-            pwStrengthSpan.textContent = "Strong Password"; pwStrengthSpan.style.color = "rgb(5, 172, 33)";
+            fpPwStrength.innerText = 'Strong Password';
+            fpPwStrength.style.color = '#059669';
         } else if (score >= 2) {
-            pwStrengthSpan.textContent = "Medium Password"; pwStrengthSpan.style.color = "#ff8c00";
+            fpPwStrength.innerText = 'Medium Password';
+            fpPwStrength.style.color = '#ff8c00';
         } else {
-            pwStrengthSpan.textContent = "Weak Password"; pwStrengthSpan.style.color = "#f50606";
+            fpPwStrength.innerText = 'Weak Password';
+            fpPwStrength.style.color = '#f50606';
         }
     }
 
-    function checkForgotPwMatch() {
-        if (!newPwInput || !confirmPwInput || !pwMatchSpan) return;
-        if (newPwInput.value !== confirmPwInput.value) {
-            pwMatchSpan.textContent = "Passwords do not match"; pwMatchSpan.style.color = "#f50606";
-        } else {
-            pwMatchSpan.textContent = "Passwords matched"; pwMatchSpan.style.color = "rgb(5, 172, 33)";
-        }
+    if (fpNewPass) {
+        fpNewPass.addEventListener('input', () => {
+            displayFpPasswordStrength(fpNewPass.value);
+            // Also update match if confirm has value
+            if (fpConfirmPass.value) {
+                if (fpNewPass.value === fpConfirmPass.value) {
+                    fpPwMatch.innerText = "Passwords matched";
+                    fpPwMatch.style.color = "#059669";
+                } else {
+                    fpPwMatch.innerText = "Passwords did not match";
+                    fpPwMatch.style.color = "#f50606";
+                }
+            }
+        });
     }
 
-    if (newPwInput) newPwInput.addEventListener('input', checkForgotPwStrength);
-    if (confirmPwInput) confirmPwInput.addEventListener('input', checkForgotPwMatch);
-    if (newPwInput) newPwInput.addEventListener('input', checkForgotPwMatch); // Check match on new pw change too
+    if (fpConfirmPass) {
+        fpConfirmPass.addEventListener('input', () => {
+            if (fpNewPass.value !== fpConfirmPass.value) {
+                fpPwMatch.innerText = "Passwords did not match";
+                fpPwMatch.style.color = "#f50606";
+            } else {
+                fpPwMatch.innerText = "Passwords matched";
+                fpPwMatch.style.color = "#059669";
+            }
+        });
+    }
 
-    if (toggleNewPw) toggleNewPw.onclick = function () {
-        newPwInput.type = newPwInput.type === 'password' ? 'text' : 'password';
-    };
-    if (toggleConfirmPw) toggleConfirmPw.onclick = function () {
-        confirmPwInput.type = confirmPwInput.type === 'password' ? 'text' : 'password';
-    };
+    if (fpStep5Btn) {
+        fpStep5Btn.addEventListener('click', async () => {
+            const newPass = document.getElementById('fpNewPass').value.trim();
+            const confirmPass = document.getElementById('fpConfirmPass').value.trim();
+            const errEl = document.getElementById('fpStep5Error');
+            const successEl = document.getElementById('fpStep5Success');
 
-    if (window.FORGOT_PASSWORD_API && document.getElementById("forgotStep1")) {
-        var step1 = document.getElementById("forgotStep1");
-        var step2 = document.getElementById("forgotStep2");
-        var step3 = document.getElementById("forgotStep3");
-        var step4 = document.getElementById("forgotStep4");
-        var stepTitle = document.getElementById("forgotStepTitle");
-        var step1Msg = document.getElementById("forgotStep1Msg");
-        var step2Msg = document.getElementById("forgotStep2Msg");
-        var step3Msg = document.getElementById("forgotStep3Msg");
-        var step4Msg = document.getElementById("forgotStep4Msg");
-        var sendOtpBtn = document.getElementById("forgotSendOtpBtn");
-        var otpSentTo = document.getElementById("forgotOtpSentTo");
-        var otpInputWrap = document.getElementById("forgotOtpInputWrap");
-        var forgotOtpInput = document.getElementById("forgot_otp");
-        var resendHint = document.getElementById("forgotResendHint");
-        var resendOtpBtn = document.getElementById("forgotResendOtpBtn");
-        var verifyOtpBtn = document.getElementById("forgotVerifyOtpBtn");
-        var step3Btn = document.getElementById("forgotStep3Btn");
-        var step4Btn = document.getElementById("forgotStep4Btn");
-        var resendCountdown = null;
+            // Reset msgs
+            errEl.textContent = '';
+            successEl.textContent = '';
+            successEl.style.display = 'none';
 
-        function showStep(n) {
-            [step1, step2, step3, step4].forEach(function (s) { if (s) s.style.display = "none"; });
-            step1Msg.textContent = ""; step2Msg.textContent = ""; step3Msg.textContent = ""; step4Msg.textContent = "";
-            var titles = ["Step 1: Verify your User ID", "Step 2: Get and enter OTP", "Step 3: Answer Security Questions", "Step 4: Set new password"];
-            if (stepTitle) stepTitle.textContent = titles[n - 1] || "";
-            var el = [step1, step2, step3, step4][n - 1];
-            if (el) el.style.display = "block";
+            if (newPass.length < 8) {
+                errEl.textContent = 'Password must be at least 8 characters.';
+                return;
+            }
+            if (newPass !== confirmPass) {
+                errEl.textContent = 'Passwords do not match.';
+                return;
+            }
+
+            fpStep5Btn.disabled = true;
+            fpStep5Btn.textContent = 'Resetting...';
+
+            const fd = new FormData();
+            fd.append('new_password', newPass);
+            fd.append('confirm_password', confirmPass);
+
+            try {
+                const apiUrl = window.BASE_URL + '/php/forms/action_reset_password.php';
+                const res = await fetch(apiUrl, { method: 'POST', body: fd });
+                const data = await res.json();
+
+                if (data.success) {
+                    successEl.textContent = data.message;
+                    successEl.style.display = 'block';
+                    fpStep5Btn.textContent = 'SUCCESS';
+
+                    // Close modal after 2 seconds
+                    setTimeout(() => {
+                        closeFpModal();
+                        // Reset form
+                        document.getElementById('fpNewPass').value = '';
+                        document.getElementById('fpConfirmPass').value = '';
+                        fpStep5Btn.textContent = 'RESET PASSWORD';
+                        fpStep5Btn.disabled = false;
+                    }, 2000);
+                } else {
+                    errEl.textContent = data.message || 'Failed to reset password.';
+                    fpStep5Btn.disabled = false;
+                    fpStep5Btn.textContent = 'RESET PASSWORD';
+                }
+            } catch (e) {
+                errEl.textContent = 'Network error.';
+                fpStep5Btn.disabled = false;
+                fpStep5Btn.textContent = 'RESET PASSWORD';
+            }
+        });
+    }
+
+    // Timer Logic
+    let fpTimerInterval;
+    const fpResendBtn = document.getElementById('fpResendBtn');
+
+    function startFpTimer() {
+        let sec = 60;
+        const timerText = document.getElementById('fpTimerText');
+        const countdown = document.getElementById('fpCountdown');
+
+        if (timerText) timerText.style.display = 'inline';
+        if (fpResendBtn) fpResendBtn.style.display = 'none';
+
+        if (fpTimerInterval) clearInterval(fpTimerInterval);
+
+        if (countdown) countdown.textContent = sec;
+
+        fpTimerInterval = setInterval(() => {
+            sec--;
+            if (countdown) countdown.textContent = sec;
+
+            if (sec <= 0) {
+                clearInterval(fpTimerInterval);
+                if (timerText) timerText.style.display = 'none';
+                if (fpResendBtn) {
+                    fpResendBtn.style.display = 'inline-block';
+                    fpResendBtn.onclick = resendFpOtp;
+                }
+            }
+        }, 1000);
+    }
+
+    async function resendFpOtp() {
+        if (fpResendBtn) {
+            fpResendBtn.textContent = 'Sending...';
+            fpResendBtn.disabled = true;
         }
 
-        function clearResendTimer() {
-            if (resendCountdown) { clearInterval(resendCountdown); resendCountdown = null; }
-            if (resendOtpBtn) { resendOtpBtn.disabled = false; resendOtpBtn.textContent = "Resend OTP"; }
-            if (resendHint) resendHint.textContent = "";
+        try {
+            const apiUrl = window.BASE_URL + '/php/forms/forgot_password_send_otp.php';
+            const res = await fetch(apiUrl, { method: 'POST' });
+            const data = await res.json();
+
+            if (data.success) {
+                startFpTimer();
+            } else {
+                alert(data.message);
+            }
+        } catch (e) {
+            alert('Network error.');
+        } finally {
+            if (fpResendBtn) {
+                fpResendBtn.textContent = 'Resend Code';
+                fpResendBtn.disabled = false;
+            }
         }
-
-        forgotPasswordLink.onclick = function () {
-            modal2.style.display = "flex";
-            resetIdInput.value = "";
-            if (forgotOtpInput) forgotOtpInput.value = "";
-
-            // Clear inputs
-            if (secureAnswer1) secureAnswer1.value = "";
-            if (secureAnswer2) secureAnswer2.value = "";
-            if (secureAnswer3) secureAnswer3.value = "";
-
-            if (newPwInput) newPwInput.value = "";
-            if (confirmPwInput) confirmPwInput.value = "";
-            if (pwStrengthSpan) pwStrengthSpan.textContent = "";
-            if (pwMatchSpan) pwMatchSpan.textContent = "";
-
-            clearResendTimer();
-            if (otpSentTo) otpSentTo.style.display = "none";
-            if (otpInputWrap) otpInputWrap.style.display = "none";
-
-            // Reset Send Button and Hint visibility
-            if (sendOtpBtn) sendOtpBtn.style.display = "block";
-            var hint = document.querySelector(".forgot-email-hint");
-            if (hint) hint.style.display = "block";
-
-            showStep(1);
-            setTimeout(function () { resetIdInput.focus(); }, 100);
-        };
-
-        function formatIdInput(event) {
-            var input = event.target;
-            var value = input.value.replace(/\D/g, ''); // Remove non-digits
-            if (value.length > 4) {
-                value = value.slice(0, 4) + '-' + value.slice(4, 8); // Auto-add dash and limit length
-            }
-            input.value = value;
-        }
-
-        if (resetIdInput) {
-            resetIdInput.addEventListener('input', formatIdInput);
-        }
-
-        document.getElementById("forgotStep1Btn").onclick = function () {
-            var id = (resetIdInput.value || "").trim();
-            step1Msg.textContent = "";
-
-            if (!id) {
-                step1Msg.textContent = "Enter your User ID.";
-                step1Msg.style.color = "#c00";
-                return;
-            }
-
-            // Format validation from Register page
-            var idPattern = /^[0-9]{4}-[0-9]{4}$/;
-            if (!idPattern.test(id)) {
-                step1Msg.textContent = "The ID must be in the format xxxx-xxxx.";
-                step1Msg.style.color = "#c00";
-                return;
-            }
-
-            var fd = new FormData(); fd.append("action", "verify_user_id"); fd.append("user_id", id);
-            fetch(window.FORGOT_PASSWORD_API, { method: "POST", body: fd })
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
-                    if (data.status === "success") {
-                        if (displayIdSpan) displayIdSpan.textContent = data.user_id;
-                        if (displayUsernameSpan) displayUsernameSpan.textContent = data.username || "";
-
-                        // Update Step 2 info
-                        var s2Id = document.getElementById('step2_display_id');
-                        var s2Name = document.getElementById('step2_display_name');
-                        var s2Email = document.getElementById('step2_display_email');
-                        if (s2Id) s2Id.textContent = data.user_id;
-                        if (s2Name) s2Name.textContent = data.fullname || "";
-                        if (s2Email) s2Email.textContent = data.email || "";
-
-                        showStep(2);
-                    } else {
-                        step1Msg.textContent = data.message || "User ID not found.";
-                        step1Msg.style.color = "#c00";
-                    }
-                })
-                .catch(function () { step1Msg.textContent = "Network error."; step1Msg.style.color = "#c00"; });
-        };
-
-        sendOtpBtn.onclick = function () {
-            step2Msg.textContent = "";
-            var fd = new FormData(); fd.append("action", "send_otp");
-            fetch(window.FORGOT_PASSWORD_API, { method: "POST", body: fd })
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
-                    if (data.status === "success" || data.status === "existing_otp") {
-                        // Hide send button and hint
-                        sendOtpBtn.style.display = "none";
-                        var hint = document.querySelector(".forgot-email-hint");
-                        if (hint) hint.style.display = "none";
-
-                        // Show OTP inputs
-                        if (otpInputWrap) otpInputWrap.style.display = "block";
-                        if (forgotOtpInput) forgotOtpInput.value = "";
-
-                        // Timer logic
-                        var sec = data.remaining_seconds || 60;
-                        if (resendOtpBtn) { resendOtpBtn.disabled = true; resendOtpBtn.textContent = "Resend OTP (" + sec + "s)"; }
-                        clearResendTimer();
-                        resendCountdown = setInterval(function () {
-                            sec--;
-                            if (sec <= 0) { clearResendTimer(); return; }
-                            if (resendOtpBtn) resendOtpBtn.textContent = "Resend OTP (" + sec + "s)";
-                        }, 1000);
-
-                        // Show validation message BELOW Verify OTP button (using step2Msg)
-                        step2Msg.textContent = "Code sent to " + (data.email || "your email") + ".";
-                        step2Msg.style.color = "#0a0"; // Green
-
-                        // If it's an existing OTP or error-like success, handle color?
-                        if (data.status === "existing_otp") {
-                            step2Msg.textContent = "Code already sent. Please check your email.";
-                            step2Msg.style.color = "#c00"; // Red as per user request ("if already sent... red")
-                        }
-                    } else {
-                        step2Msg.textContent = data.message || "Could not send OTP.";
-                        step2Msg.style.color = "#c00";
-                    }
-                })
-                .catch(function () { step2Msg.textContent = "Network error."; step2Msg.style.color = "#c00"; });
-        };
-
-        // ... (resendOtpBtn logic roughly same, but updates step2Msg) ...
-
-        if (verifyOtpBtn) verifyOtpBtn.onclick = function () {
-            var otp = (forgotOtpInput && forgotOtpInput.value || "").trim();
-            step2Msg.textContent = "";
-            if (otp.length !== 6) { step2Msg.textContent = "Enter the 6-digit code."; step2Msg.style.color = "#c00"; return; }
-            var fd = new FormData(); fd.append("action", "verify_otp"); fd.append("otp", otp);
-            fetch(window.FORGOT_PASSWORD_API, { method: "POST", body: fd })
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
-                    if (data.status === "success") {
-                        clearResendTimer();
-                        // Call get_security_question BEFORE showing step 3
-                        var fd2 = new FormData(); fd2.append("action", "get_security_question");
-                        fetch(window.FORGOT_PASSWORD_API, { method: "POST", body: fd2 })
-                            .then(function (r2) { return r2.json(); })
-                            .then(function (d2) {
-                                if (d2.status === "success") {
-                                    showStep(3);
-                                    function cleanQ(q) { return (q || "").replace(/^\d+\.\s*/, "").replace(/^\d+\s+/, ""); }
-                                    if (secureQuestionLabel1) secureQuestionLabel1.textContent = "1. " + cleanQ(d2.question1 || "Question 1");
-                                    if (secureQuestionLabel2) secureQuestionLabel2.textContent = "2. " + cleanQ(d2.question2 || "Question 2");
-                                    if (secureQuestionLabel3) secureQuestionLabel3.textContent = "3. " + cleanQ(d2.question3 || "Question 3");
-                                } else {
-                                    step2Msg.textContent = d2.message || "Could not retrieve security questions.";
-                                    step2Msg.style.color = "#c00";
-                                }
-                            })
-                            .catch(function () { step2Msg.textContent = "Error fetching questions."; step2Msg.style.color = "#c00"; });
-                    } else {
-                        step2Msg.textContent = data.message || "Invalid or expired OTP.";
-                        step2Msg.style.color = "#c00";
-                    }
-                })
-                .catch(function () { step2Msg.textContent = "Network error."; step2Msg.style.color = "#c00"; });
-        };
-
-        if (step3Btn) step3Btn.onclick = function () {
-            var a1 = (secureAnswer1 && secureAnswer1.value || "").trim();
-            var a2 = (secureAnswer2 && secureAnswer2.value || "").trim();
-            var a3 = (secureAnswer3 && secureAnswer3.value || "").trim();
-            step3Msg.textContent = "";
-
-            if (!a1 || !a2 || !a3) {
-                step3Msg.textContent = "Please answer all 3 questions.";
-                step3Msg.style.color = "#c00";
-                return;
-            }
-
-            var fd = new FormData();
-            fd.append("action", "verify_security_question");
-            fd.append("answer1", a1);
-            fd.append("answer2", a2);
-            fd.append("answer3", a3);
-
-            fetch(window.FORGOT_PASSWORD_API, { method: "POST", body: fd })
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
-                    if (data.status === "success") {
-                        showStep(4);
-                        if (newPwInput) newPwInput.focus();
-                    } else {
-                        step3Msg.textContent = data.message || "Verification failed.";
-                        step3Msg.style.color = "#c00";
-                    }
-                })
-                .catch(function () { step3Msg.textContent = "Network error."; step3Msg.style.color = "#c00"; });
-        };
-
-        if (step4Btn) step4Btn.onclick = function () {
-            var np = (newPwInput && newPwInput.value) || "";
-            var cp = (confirmPwInput && confirmPwInput.value) || "";
-            step4Msg.textContent = "";
-
-            if (np.length < 8 || np.length > 25) {
-                step4Msg.textContent = "Password must be 8–25 characters.";
-                step4Msg.style.color = "#c00";
-                return;
-            }
-            // Check complexity (at least 2 types of characters + special is recommended, but sticking to basic length + match for submit blocking to avoid being too strict if not asked, but user asked for SAME as register so we should probably respect complexity if we can.
-            // For now, let's rely on the strength indicator visual and just enforce length/match for submission, unless 'Weak' is strictly forbidden.
-            // Register page doesn't explicitly block 'Weak' in code seen, just visual.
-            if (np !== cp) {
-                // pwMatchSpan already shows the error in real-time, so no need to duplicate text in step4Msg
-                return;
-            }
-
-            var fd = new FormData();
-            fd.append("action", "change_password");
-            fd.append("new_password", np);
-            fd.append("confirm_password", cp);
-            fetch(window.FORGOT_PASSWORD_API, { method: "POST", body: fd })
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
-                    if (data.status === "success") {
-                        step4Msg.textContent = data.message || "Password changed. You can login now.";
-                        step4Msg.style.color = "#0a0";
-                        setTimeout(function () {
-                            modal2.style.display = "none";
-                            var vp = document.getElementById("validationMessPw");
-                            if (vp) { vp.textContent = "Password changed. You can login now."; vp.style.display = "block"; }
-                        }, 1500);
-                    } else {
-                        step4Msg.textContent = data.message || "Failed to change password.";
-                        step4Msg.style.color = "#c00";
-                    }
-                })
-                .catch(function () { step4Msg.textContent = "Network error."; step4Msg.style.color = "#c00"; });
-        };
-    } else {
-        forgotPasswordLink.onclick = function () {
-            modal2.style.display = "flex";
-            if (resetIdInput) { resetIdInput.value = ""; setTimeout(function () { resetIdInput.focus(); }, 100); }
-        };
     }
 });

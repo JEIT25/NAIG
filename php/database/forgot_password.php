@@ -137,7 +137,7 @@ if ($action === 'verify_otp') {
     exit;
 }
 
-// Get security question (single; DAMALERIO has one question)
+// Get security question (single; NAIG has one question)
 if ($action === 'get_security_question') {
     if (!isset($_SESSION['forgot_password_user_id']) || !isset($_SESSION['forgot_password_otp_verified'])) {
         echo json_encode(['status' => 'error', 'message' => 'Complete previous steps first.']);

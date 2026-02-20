@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (isset($_SESSION['user'])) {
-    header('Location: ' . (function_exists('getBaseUrl') ? getBaseUrl() : 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/DAMALERIO') . '/php/auth/dashboard.php');
+    header('Location: ' . (function_exists('getBaseUrl') ? getBaseUrl() : 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/NAIG') . '/php/auth/dashboard.php');
     exit;
 }
 require_once __DIR__ . '/../includes/auth.php';
@@ -57,7 +57,7 @@ exit;
                 <button id="userNotFoundOkBtn" class="submitBtn">Okay</button>
             </div>
         </div>
-        <form class="login-form" id="loginForm" method="POST" action="http://localhost/DAMALERIO/php/forms/login.php">
+        <form class="login-form" id="loginForm" method="POST" action="http://localhost/NAIG/php/forms/login.php">
             <div class="left-side">
                 <img class="form-img" src="../../images/background2.png" alt="Food Delivery">
             </div>
@@ -88,7 +88,8 @@ exit;
                                 </svg>
                             </div>
                             <span id="validationMessPw" class="userValidationMess" style="<?php echo $login_error ? 'display: block;' : ''; ?>">
-    <?php if ($login_error) echo htmlspecialchars($login_error); ?>
+    <?php if ($login_error)
+    echo htmlspecialchars($login_error); ?>
 </span>
                         </div>
                     </div>
@@ -96,48 +97,10 @@ exit;
 
                 <button type="submit" class="submitBtn">Login</button>
 
-                <a href="#" id="forgotPasswordLink" class="forgot-pw">Forgot Password? Reset
-                    Here</a>
+                <a href="forgot_password.php" class="forgot-pw">Forgot Password? Reset Here</a>
             </div>
         </form>
     </main>
-
-    <!-- UPDATED FORGOT PASSWORD MODAL -->
-    <div id="forgotPasswordModal" class="modal2" style="display: none">
-        <div class="modal2-content">
-            <span class="close">&times;</span>
-            <h2>Forgot Password</h2>
-
-            <!-- Step 1: Enter ID -->
-            <div id="usernameStep">
-                <form id="usernameForm" method="POST" action="">
-                    <label for="reset_id">Enter your User ID:</label>
-                    <input type="text" id="reset_id" name="reset_id" required>
-                    <button type="submit" class="submitBtn">Next</button>
-                </form>
-            </div>
-
-            <!-- Step 2: Confirm & Answer -->
-            <div id="securityQuestionStep" style="display: none;">
-                <form id="securityQuestionForm" method="POST" action="handle_forgot_password.php">
-
-                    <!-- New: Display ID and Username (Styled for Happy Paws) -->
-                    <div class="user-details-box" style="background: rgba(255, 200, 87, 0.15); padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid var(--color-muted);">
-                        <p style="margin-bottom: 4px; color: var(--color-heading);"><strong>User ID:</strong> <span id="display_id" style="color: var(--color-accent); font-weight: bold;"></span></p>
-                        <p style="margin-bottom: 0; color: var(--color-heading);"><strong>Username:</strong> <span id="display_username" style="color: var(--color-accent); font-weight: bold;"></span></p>
-                    </div>
-
-                    <label id="secure_question_label" style="display:block; margin-bottom:8px; font-weight:600;"></label>
-                    <input type="password" id="secure_answer" name="secure_answer" required placeholder="Enter your answer">
-
-                    <!-- Hidden field to pass the ID to the final handler -->
-                    <input type="hidden" id="hidden_user_id" name="user_id">
-
-                    <button type="submit" class="submitBtn">Submit</button>
-                </form>
-            </div>
-        </div>
-    </div>
 
     <footer>
         <div class="footer-upper">
@@ -165,6 +128,112 @@ exit;
             <p>All rights reserved &copy; 2026</p>
         </div>
     </footer>
+
+    <!-- ===== Enhanced Forgot Password Modal ===== -->
+<div class="fp-modal-overlay" id="fpModalOverlay">
+    <div class="fp-modal">
+        <button class="fp-close" id="fpClose">&times;</button>
+
+        <!-- STEP 1: Enter ID -->
+        <div class="fp-step active" id="fpStep1">
+            <div class="fp-icon"><i class="fa-solid fa-id-card"></i></div>
+            <h3>Forgot Password</h3>
+            <p class="fp-subtitle">Enter your ID number to verify your identity.</p>
+
+            <div class="form-group">
+                <label for="fpUserId">ID Number</label>
+                <div class="input-with-icon">
+                    <i class="fa-solid fa-user-tag input-icon"></i>
+                    <input type="text" id="fpUserId" placeholder="XXXX-XXXX" maxlength="9">
+                </div>
+            </div>
+            <span id="fpStep1Error" class="error-text"></span>
+            <button class="fp-btn" id="fpStep1Btn">VERIFY IDENTITY</button>
+        </div>
+
+        <!-- STEP 2: Confirm User -->
+        <div class="fp-step" id="fpStep2">
+            <div class="fp-icon"><i class="fa-solid fa-user-check"></i></div>
+            <h3>Confirm Account</h3>
+            <p class="fp-subtitle">Is this you? We'll send a code to this email.</p>
+
+            <div class="user-details-box" id="fpUserInfo" style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: left; border: 1px solid #e2e8f0;">
+                <!-- Populated by JS -->
+            </div>
+
+            <button class="fp-btn" id="fpStep2Btn">YES, SEND CODE</button>
+            <button class="fp-btn" id="fpStep2Back" style="background:none; color:#64748b; margin-top:10px;">Not me? Try again</button>
+        </div>
+
+        <!-- Step 3: Verify OTP -->
+        <div id="fpStep3" class="fp-step">
+            <div class="fp-icon"><i class="fa-solid fa-envelope-open-text"></i></div>
+            <h3>Enter Verification Code</h3>
+            <p class="fp-subtitle">Please enter the 6-digit code sent to your email.</p>
+
+            <div class="form-group">
+                <label for="fpOtp">Verification Code</label>
+                <input type="text" id="fpOtp" placeholder="000000" maxlength="6" style="text-align: center; letter-spacing: 0.2em; font-size: 1.2rem;">
+            </div>
+            <span id="fpStep3Error" class="error-text"></span>
+            <button class="fp-btn" id="fpStep3Btn">VERIFY CODE</button>
+
+            <div class="otp-resend">
+                <span id="fpTimerText">Resend available in <span id="fpCountdown">60</span>s</span>
+                <button id="fpResendBtn" style="display:none;">Resend Code</button>
+            </div>
+        </div>
+
+        <!-- Step 4: Security Questions -->
+        <div id="fpStep4" class="fp-step">
+            <div class="fp-icon"><i class="fa-solid fa-question-circle"></i></div>
+            <h3>Security Questions</h3>
+            <p class="fp-subtitle">Please answer your security questions to continue.</p>
+
+            <div id="fpQuestionsContainer">
+                <div class="form-group">
+                    <label id="fpQLabel1">Question 1</label>
+                    <input type="password" id="fpAns1" placeholder="Your answer">
+                </div>
+                <div class="form-group">
+                    <label id="fpQLabel2">Question 2</label>
+                    <input type="password" id="fpAns2" placeholder="Your answer">
+                </div>
+                <div class="form-group">
+                    <label id="fpQLabel3">Question 3</label>
+                    <input type="password" id="fpAns3" placeholder="Your answer">
+                </div>
+            </div>
+
+            <span id="fpStep4Error" class="error-text"></span>
+            <button class="fp-btn" id="fpStep4Btn">VERIFY ANSWERS</button>
+        </div>
+
+        <!-- Step 5: Change Password -->
+        <div id="fpStep5" class="fp-step">
+            <div class="fp-icon"><i class="fa-solid fa-lock"></i></div>
+            <h3>Reset Password</h3>
+            <p class="fp-subtitle">Create a new password for your account.</p>
+
+            <div class="form-group">
+                <label for="fpNewPass">New Password</label>
+                <input type="password" id="fpNewPass" placeholder="Enter new password" minlength="8">
+                <span id="fpPwStrength" style="font-size: 0.8rem; margin-top: 5px; display: block;"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="fpConfirmPass">Confirm Password</label>
+                <input type="password" id="fpConfirmPass" placeholder="Confirm new password" minlength="8">
+                <span id="fpPwMatch" style="font-size: 0.8rem; margin-top: 5px; display: block;"></span>
+            </div>
+
+            <span id="fpStep5Error" class="error-text"></span>
+            <span id="fpStep5Success" class="success-text" style="display: none;"></span>
+
+            <button class="fp-btn" id="fpStep5Btn">RESET PASSWORD</button>
+        </div>
+    </div>
+</div>
 
     <script src="../../js/serve_asset.php?file=login.js"></script>
 </body>

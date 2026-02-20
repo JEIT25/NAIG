@@ -8,17 +8,17 @@
 if (!function_exists('getBaseUrl')) {
     /**
      * Base URL for the app (no trailing slash).
-     * Uses DOCUMENT_ROOT + DAMALERIO so it works on XAMPP.
+     * Uses DOCUMENT_ROOT + NAIG so it works on XAMPP.
      */
     function getBaseUrl()
     {
         $doc = rtrim($_SERVER['DOCUMENT_ROOT'] ?? '', '/');
         $script = dirname($_SERVER['SCRIPT_NAME'] ?? '');
         // If we're in php/forms or php/admin etc., go up to project root
-        if (strpos($script, '/DAMALERIO') !== false) {
+        if (strpos($script, '/NAIG') !== false) {
             return 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . preg_replace('#/php/.*$#', '', $script);
         }
-        return 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/DAMALERIO';
+        return 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/NAIG';
     }
 }
 

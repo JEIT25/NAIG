@@ -1,5 +1,4 @@
 const registerForm = document.querySelector('#signUpForm');
-const systName = document.getElementById('navbarLeft');
 let pwSpanMessage = document.getElementById('pwStrength');
 let pwSpanMatch = document.getElementById('pwMatch');
 const togglePassword = document.querySelector('#togglePassword');
@@ -8,7 +7,7 @@ const password = document.querySelector('#password');
 const repassword = document.querySelector('#repassword');
 let birthdateInput = registerForm.querySelector('#birthdate');
 const ageInput = registerForm.querySelector('#age');
-let formImg = document.querySelector('.form-img');
+const stepIndicatorItems = document.querySelectorAll('.step-indicators li');
 
 // --- New Multi-Step Form Variables ---
 const formSteps = document.querySelectorAll('.form-step');
@@ -128,7 +127,7 @@ async function checkFieldExists(fieldId, value, fieldName) {
     formData.append('value', value);
 
     try {
-        const response = await fetch('http://localhost/DAMALERIO/php/database/check_unique.php', {
+        const response = await fetch('http://localhost/NAIG/php/database/check_unique.php', {
             method: 'POST',
             body: formData
         });
@@ -164,19 +163,28 @@ function showStep(stepIndex) {
         step.classList.toggle('active', index === stepIndex);
     });
 
+    // Update sidebar step indicators
+    if (stepIndicatorItems) {
+        stepIndicatorItems.forEach((item, index) => {
+            item.classList.remove('active', 'completed');
+            if (index === stepIndex) {
+                item.classList.add('active');
+            } else if (index < stepIndex) {
+                item.classList.add('completed');
+            }
+        });
+    }
+
     // Update button visibility
     if (stepIndex === 0) {
-        // First step
         prevBtn.style.display = 'none';
         nextBtn.style.display = 'inline-block';
         submitBtn.style.display = 'none';
     } else if (stepIndex === formSteps.length - 1) {
-        // Last step
         prevBtn.style.display = 'inline-block';
         nextBtn.style.display = 'none';
         submitBtn.style.display = 'inline-block';
     } else {
-        // Middle steps
         prevBtn.style.display = 'inline-block';
         nextBtn.style.display = 'inline-block';
         submitBtn.style.display = 'none';
@@ -401,21 +409,38 @@ function validateStep3() {
 function validateStep4() {
     let isValid = true;
     const form = registerForm;
-    const secureQuestion = form.secure_question.value;
-    const secureAnswer = form.secure_answer.value;
 
-    if (!secureQuestion) {
-        showValidationError('secure_question', 'Please select a security question.');
-        isValid = false;
-    } else {
-        clearValidationError('secure_question');
-    }
+    // Validate all 3 security questions and answers
+    const qaPairs = [
+        { q: 'secure_question', a: 'secure_answer' },
+        { q: 'secure_question2', a: 'secure_answer2' },
+        { q: 'secure_question3', a: 'secure_answer3' }
+    ];
 
-    if (secureAnswer.length < 3 || secureAnswer.length > 50) {
-        showValidationError('secure_answer', 'Answer must be between 3 and 50 characters.');
+    qaPairs.forEach(({ q, a }) => {
+        const qVal = form[q] ? form[q].value : '';
+        const aVal = form[a] ? form[a].value : '';
+
+        if (!qVal) {
+            showValidationError(q, 'Please select a security question.');
+            isValid = false;
+        } else {
+            clearValidationError(q);
+        }
+
+        if (aVal.length < 3 || aVal.length > 50) {
+            showValidationError(a, 'Answer must be between 3 and 50 characters.');
+            isValid = false;
+        } else {
+            clearValidationError(a);
+        }
+    });
+
+    // Check for duplicate questions
+    const selectedQs = qaPairs.map(({ q }) => form[q] ? form[q].value : '').filter(v => v);
+    if (new Set(selectedQs).size !== selectedQs.length) {
+        showValidationError('secure_question3', 'Each security question must be different.');
         isValid = false;
-    } else {
-        clearValidationError('secure_answer');
     }
 
     // --- Other Step 4 Validations ---
@@ -737,9 +762,7 @@ birthdateInput.addEventListener('change', () => {
 // This listener is now handled in 'DOMContentLoaded'
 // document.querySelector('input[name="id"]').addEventListener('input', formatIdInput);
 
-systName.addEventListener('click', () => {
-    window.location.href = "./homepage.php"; // Point to homepage
-});
+// Brand click handled by navbar link
 
 registerForm.addEventListener('submit', async function (e) {
     e.preventDefault();
@@ -759,7 +782,7 @@ registerForm.addEventListener('submit', async function (e) {
         const formData = new FormData(this);
 
         try {
-            const response = await fetch('http://localhost/DAMALERIO/php/database/signup.php', {
+            const response = await fetch('http://localhost/NAIG/php/database/signup.php', {
                 method: 'POST',
                 body: formData
             });
@@ -773,7 +796,7 @@ registerForm.addEventListener('submit', async function (e) {
 
                 // Redirect after 3 seconds
                 setTimeout(() => {
-                    window.location.href = "http://localhost/DAMALERIO/php/forms/login.php";
+                    window.location.href = "http://localhost/NAIG/php/auth/login.php";
                 }, 3000);
             } else {
                 // ... (Error handling logic remains the same)

@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $totalPages = ceil($total / $limit);
 
     // Fetch
-    $stmt = $conn->prepare("SELECT id, name, description, address, image_path, is_active FROM restaurants ORDER BY name LIMIT ? OFFSET ?");
+    $stmt = $conn->prepare("SELECT id, name, description, address, image_path, cuisine_type, capacity, opening_time, closing_time, price_range, is_active FROM restaurants ORDER BY name LIMIT ? OFFSET ?");
     $stmt->bind_param('ii', $limit, $offset);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -37,6 +37,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $description = trim($_POST['description'] ?? '');
         $address = trim($_POST['address'] ?? '');
         $image_path = trim($_POST['image_path'] ?? '');
+        $cuisine = trim($_POST['cuisine_type'] ?? 'General');
+        $capacity = (int)($_POST['capacity'] ?? 50);
+        $openTime = $_POST['opening_time'] ?? '09:00';
+        $closeTime = $_POST['closing_time'] ?? '22:00';
+        $price = $_POST['price_range'] ?? '$$';
         $is_active = isset($_POST['is_active']) ? (int)$_POST['is_active'] : 1;
 
         if ($name === '') {
@@ -44,12 +49,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
         if ($id > 0) {
-            $stmt = $conn->prepare("UPDATE restaurants SET name = ?, description = ?, address = ?, image_path = ?, is_active = ? WHERE id = ?");
-            $stmt->bind_param('ssssii', $name, $description, $address, $image_path, $is_active, $id);
+            $stmt = $conn->prepare("UPDATE restaurants SET name=?, description=?, address=?, image_path=?, cuisine_type=?, capacity=?, opening_time=?, closing_time=?, price_range=?, is_active=? WHERE id=?");
+            $stmt->bind_param('sssssisssii', $name, $description, $address, $image_path, $cuisine, $capacity, $openTime, $closeTime, $price, $is_active, $id);
         }
         else {
-            $stmt = $conn->prepare("INSERT INTO restaurants (name, description, address, image_path, is_active) VALUES (?, ?, ?, ?, ?)");
-            $stmt->bind_param('ssssi', $name, $description, $address, $image_path, $is_active);
+            $stmt = $conn->prepare("INSERT INTO restaurants (name, description, address, image_path, cuisine_type, capacity, opening_time, closing_time, price_range, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param('sssssisssi', $name, $description, $address, $image_path, $cuisine, $capacity, $openTime, $closeTime, $price, $is_active);
         }
         if ($stmt->execute()) {
             $newId = $id > 0 ? $id : $conn->insert_id;

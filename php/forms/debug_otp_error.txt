@@ -1,0 +1,26 @@
+[2026-02-20 05:06:36] Script started. User ID session: 0001-0005
+[2026-02-20 05:06:36] Array
+(
+    [type] => 1
+    [message] => Uncaught mysqli_sql_exception: Unknown column 'resend_count' in 'field list' in C:\xampp\htdocs\NAIG\php\forms\forgot_password_send_otp.php:54
+Stack trace:
+#0 C:\xampp\htdocs\NAIG\php\forms\forgot_password_send_otp.php(54): mysqli->prepare('SELECT id, rese...')
+#1 {main}
+  thrown
+    [file] => C:\xampp\htdocs\NAIG\php\forms\forgot_password_send_otp.php
+    [line] => 54
+)
+
+[2026-02-20 05:16:06] start script. user_id: null
+[2026-02-20 05:16:06] fam28amFriday Europe/BerlinFri, 20 Feb 2026 05:16:06 +0100Fri, 20 Feb 2026 05:16:06 +01002026Fri, 20 Feb 2026 05:16:06 +0100: Array
+(
+    [type] => 1
+    [message] => Uncaught mysqli_sql_exception: Unknown column 'last_resend_at' in 'field list' in C:\xampp\htdocs\NAIG\php\forms\forgot_password_send_otp.php:50
+Stack trace:
+#0 C:\xampp\htdocs\NAIG\php\forms\forgot_password_send_otp.php(50): mysqli->prepare('SELECT id, rese...')
+#1 {main}
+  thrown
+    [file] => C:\xampp\htdocs\NAIG\php\forms\forgot_password_send_otp.php
+    [line] => 50
+)
+

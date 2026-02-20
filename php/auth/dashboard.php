@@ -1,15 +1,20 @@
 <?php
 /**
- * Single dashboard for all roles (AMORA-style).
- * Uses layout: navbar, role-based sidebar, footer.
- * Consumer: aggregated stats (total orders, pending, latest order, favorites).
+ * NAIGO Dashboard - All roles.
+ * Consumer: reservation stats, latest restaurants, latest reservations, quick links.
+ * Admin/Superadmin: management links.
  */
 require_once __DIR__ . '/../includes/auth_check.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['logout_action'])) {
-    session_unset();
+if (isset($_POST['logout_action'])) {
+    require_once __DIR__ . '/../database/db_connect.php';
+    $logStmt = $conn->prepare("INSERT INTO login_logs (user_id, action) VALUES (?, 'logout')");
+    $logStmt->bind_param('s', $_SESSION['user']['id']);
+    $logStmt->execute();
+    $logStmt->close();
+    $conn->close();
     session_destroy();
-    header('Location: ' . getBaseUrl() . '/php/auth/login.php');
+    header('Location: login.php');
     exit;
 }
 
@@ -18,237 +23,267 @@ $baseUrl = getBaseUrl();
 $currentPage = 'dashboard';
 $pageTitle = 'Dashboard';
 
-// Consumer dashboard stats (aggregation)
+// Consumer dashboard data
 $consumerStats = null;
+$latestReservations = [];
+$latestRestaurants = [];
+
 if ($userRole === 'consumer' && isset($user['id'])) {
-    try {
-        require_once __DIR__ . '/../database/db_connect.php';
-        $uid = $user['id'];
-        $consumerStats = [
-            'total_orders' => 0,
-            'pending_orders' => 0,
-            'total_spent' => 0,
-            'favorites_count' => 0,
-            'latest_order' => null,
-        ];
-        $stmt = $conn->prepare("SELECT COUNT(*) AS n FROM orders WHERE user_id = ?");
-    $stmt->bind_param('s', $uid);
-    $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
-    $consumerStats['total_orders'] = (int) ($row['n'] ?? 0);
-    $stmt->close();
+    require_once __DIR__ . '/../database/db_connect.php';
+    $uid = $user['id'];
+    $consumerStats = [
+        'total_reservations' => 0,
+        'pending_reservations' => 0,
+        'confirmed_reservations' => 0,
+        'completed_reservations' => 0,
+        'upcoming' => null,
+    ];
 
-    $stmt = $conn->prepare("SELECT COUNT(*) AS n FROM orders WHERE user_id = ? AND status NOT IN ('delivered','cancelled')");
-    $stmt->bind_param('s', $uid);
-    $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
-    $consumerStats['pending_orders'] = (int) ($row['n'] ?? 0);
-    $stmt->close();
+    $stmt = $conn->prepare("SELECT COUNT(*) as n FROM reservations WHERE user_id = ?");
+    if ($stmt) { $stmt->bind_param('s', $uid); $stmt->execute(); $consumerStats['total_reservations'] = (int)($stmt->get_result()->fetch_assoc()['n'] ?? 0); $stmt->close(); }
 
-    $stmt = $conn->prepare("SELECT COALESCE(SUM(total_amount), 0) AS total FROM orders WHERE user_id = ? AND status = 'delivered'");
-    $stmt->bind_param('s', $uid);
-    $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
-    $consumerStats['total_spent'] = (float) ($row['total'] ?? 0);
-    $stmt->close();
+    $stmt = $conn->prepare("SELECT COUNT(*) as n FROM reservations WHERE user_id = ? AND status = 'pending'");
+    if ($stmt) { $stmt->bind_param('s', $uid); $stmt->execute(); $consumerStats['pending_reservations'] = (int)($stmt->get_result()->fetch_assoc()['n'] ?? 0); $stmt->close(); }
 
-    $stmt = $conn->prepare("SELECT COUNT(*) AS n FROM user_favorites WHERE user_id = ?");
-    $stmt->bind_param('s', $uid);
-    $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
-    $consumerStats['favorites_count'] = (int) ($row['n'] ?? 0);
-    $stmt->close();
+    $stmt = $conn->prepare("SELECT COUNT(*) as n FROM reservations WHERE user_id = ? AND status = 'confirmed'");
+    if ($stmt) { $stmt->bind_param('s', $uid); $stmt->execute(); $consumerStats['confirmed_reservations'] = (int)($stmt->get_result()->fetch_assoc()['n'] ?? 0); $stmt->close(); }
 
-    $stmt = $conn->prepare("
-        SELECT o.id, o.status, o.total_amount, o.created_at, r.name AS restaurant_name
-        FROM orders o
-        JOIN restaurants r ON r.id = o.restaurant_id
-        WHERE o.user_id = ?
-        ORDER BY o.created_at DESC
-        LIMIT 1
-    ");
-    $stmt->bind_param('s', $uid);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    if ($res->num_rows > 0) {
-        $consumerStats['latest_order'] = $res->fetch_assoc();
-        $consumerStats['latest_order']['total_amount'] = (float) ($consumerStats['latest_order']['total_amount'] ?? 0);
-    }
-    $stmt->close();
+    $stmt = $conn->prepare("SELECT COUNT(*) as n FROM reservations WHERE user_id = ? AND status = 'completed'");
+    if ($stmt) { $stmt->bind_param('s', $uid); $stmt->execute(); $consumerStats['completed_reservations'] = (int)($stmt->get_result()->fetch_assoc()['n'] ?? 0); $stmt->close(); }
+
+    $stmt = $conn->prepare("SELECT r.*, rest.name AS restaurant_name FROM reservations r JOIN restaurants rest ON rest.id = r.restaurant_id WHERE r.user_id = ? AND r.status IN ('pending','confirmed') AND r.reservation_date >= CURDATE() ORDER BY r.reservation_date ASC, r.reservation_time ASC LIMIT 1");
+    if ($stmt) { $stmt->bind_param('s', $uid); $stmt->execute(); $res = $stmt->get_result()->fetch_assoc(); if ($res) $consumerStats['upcoming'] = $res; $stmt->close(); }
+
+    $stmt = $conn->prepare("SELECT r.*, rest.name AS restaurant_name FROM reservations r JOIN restaurants rest ON rest.id = r.restaurant_id WHERE r.user_id = ? ORDER BY r.created_at DESC LIMIT 5");
+    if ($stmt) { $stmt->bind_param('s', $uid); $stmt->execute(); $result = $stmt->get_result(); while ($row = $result->fetch_assoc()) { $latestReservations[] = $row; } $stmt->close(); }
+
+    $rstmt = $conn->query("SELECT * FROM restaurants WHERE is_active = 1 ORDER BY created_at DESC LIMIT 4");
+    if ($rstmt) { while ($row = $rstmt->fetch_assoc()) { $latestRestaurants[] = $row; } }
+
     $conn->close();
-    } catch (Exception $e) {
-        $consumerStats = null;
-    }
 }
-?>
-<!DOCTYPE html>
+?><!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo htmlspecialchars($pageTitle); ?> - FoodGrab</title>
+    <title><?php echo htmlspecialchars($pageTitle); ?> - NAIGO</title>
     <link rel="stylesheet" href="<?php echo $basePath; ?>css/serve_asset.php?file=design-system.css">
     <link rel="stylesheet" href="<?php echo $basePath; ?>css/serve_asset.php?file=dashboard.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="<?php echo $basePath; ?>css/serve_asset.php?file=reservations.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
     <?php
-    $showSidebarToggle = true;
-    include __DIR__ . '/../includes/layout/navbar.php';
-    ?>
+$showSidebarToggle = true;
+include __DIR__ . '/../includes/layout/navbar.php';
+?>
     <div class="dashboard-container">
         <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
         <?php include __DIR__ . '/../includes/layout/sidebar.php'; ?>
+
         <main class="dashboard-main">
             <h1 class="page-title">Welcome, <?php echo htmlspecialchars($user['firstName']); ?>!</h1>
             <p class="page-subtitle"><?php
-                if ($userRole === 'consumer') echo 'Order food, track orders, and manage your account.';
-                elseif ($userRole === 'admin') echo 'Manage orders, restaurants, and menu items.';
-                else echo 'Manage users, roles, and system settings.';
-            ?></p>
+if ($userRole === 'consumer')
+    echo 'Browse restaurants, make reservations, and manage your dining experiences.';
+elseif ($userRole === 'admin')
+    echo 'Manage restaurants, tables, and reservations.';
+else
+    echo 'Manage users, roles, and system settings.';
+?></p>
 
             <?php if ($userRole === 'consumer'): ?>
                 <?php if ($consumerStats !== null): ?>
-                <section class="dashboard-stats" aria-label="Order and account summary">
+                <section class="dashboard-stats" aria-label="Reservation summary">
                     <div class="stats-grid">
                         <div class="stat-card">
-                            <div class="stat-icon" aria-hidden="true"><i class="fa-solid fa-receipt"></i></div>
+                            <div class="stat-icon" aria-hidden="true"><i class="fa-solid fa-calendar-check"></i></div>
                             <div class="stat-content">
-                                <span class="stat-value"><?php echo (int) $consumerStats['total_orders']; ?></span>
-                                <span class="stat-label">Total orders</span>
+                                <span class="stat-value"><?php echo $consumerStats['total_reservations']; ?></span>
+                                <span class="stat-label">Total Reservations</span>
                             </div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon stat-icon-pending" aria-hidden="true"><i class="fa-solid fa-clock"></i></div>
                             <div class="stat-content">
-                                <span class="stat-value"><?php echo (int) $consumerStats['pending_orders']; ?></span>
-                                <span class="stat-label">Active orders</span>
+                                <span class="stat-value"><?php echo $consumerStats['pending_reservations']; ?></span>
+                                <span class="stat-label">Pending</span>
                             </div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-icon stat-icon-spent" aria-hidden="true"><i class="fa-solid fa-peso-sign"></i></div>
+                            <div class="stat-icon stat-icon-confirmed" aria-hidden="true"><i class="fa-solid fa-circle-check"></i></div>
                             <div class="stat-content">
-                                <span class="stat-value"><?php echo number_format($consumerStats['total_spent'], 0); ?></span>
-                                <span class="stat-label">Total spent (delivered)</span>
+                                <span class="stat-value"><?php echo $consumerStats['confirmed_reservations']; ?></span>
+                                <span class="stat-label">Confirmed</span>
                             </div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-icon stat-icon-fav" aria-hidden="true"><i class="fa-solid fa-heart"></i></div>
+                            <div class="stat-icon stat-icon-completed" aria-hidden="true"><i class="fa-solid fa-flag-checkered"></i></div>
                             <div class="stat-content">
-                                <span class="stat-value"><?php echo (int) $consumerStats['favorites_count']; ?></span>
-                                <span class="stat-label">Favorites</span>
+                                <span class="stat-value"><?php echo $consumerStats['completed_reservations']; ?></span>
+                                <span class="stat-label">Completed</span>
                             </div>
                         </div>
                     </div>
-                    <?php if (!empty($consumerStats['latest_order'])): $lo = $consumerStats['latest_order']; ?>
+
+                    <?php if (!empty($consumerStats['upcoming'])):
+                        $up = $consumerStats['upcoming']; ?>
                     <div class="latest-order-section">
-                        <h2 class="section-title">Latest order</h2>
-                        <a href="<?php echo $baseUrl; ?>/php/forms/track_order.php?order_id=<?php echo (int) $lo['id']; ?>" class="latest-order-card card-link">
-                            <div class="latest-order-main">
-                                <span class="latest-order-restaurant"><?php echo htmlspecialchars($lo['restaurant_name'] ?? 'Restaurant'); ?></span>
-                                <span class="latest-order-date"><?php echo date('M j, Y g:i A', strtotime($lo['created_at'])); ?></span>
+                        <h2 class="section-title">Upcoming Reservation</h2>
+                        <a href="<?php echo $baseUrl; ?>/php/forms/my_reservations.php" class="latest-order-card card-interactive">
+                            <div class="latest-order-info">
+                                <span class="latest-order-restaurant"><?php echo htmlspecialchars($up['restaurant_name']); ?></span>
+                                <span class="latest-order-meta">
+                                    <?php echo date('M d, Y', strtotime($up['reservation_date'])); ?> at
+                                    <?php echo date('g:i A', strtotime($up['reservation_time'])); ?>
+                                    &middot; <?php echo $up['party_size']; ?> guests
+                                    &middot; <span class="status-badge status-<?php echo $up['status']; ?>"><?php echo ucfirst($up['status']); ?></span>
+                                </span>
                             </div>
-                            <div class="latest-order-meta">
-                                <span class="order-status-badge order-status-<?php echo htmlspecialchars($lo['status']); ?>"><?php echo htmlspecialchars($lo['status']); ?></span>
-                                <span class="latest-order-amount">₱<?php echo number_format($lo['total_amount'], 2); ?></span>
-                            </div>
-                            <span class="latest-order-link-text">Track order <i class="fa-solid fa-arrow-right"></i></span>
+                            <span class="latest-order-link-text">View details <i class="fa-solid fa-arrow-right"></i></span>
                         </a>
                     </div>
                     <?php else: ?>
                     <div class="latest-order-section">
-                        <h2 class="section-title">Latest order</h2>
+                        <h2 class="section-title">Upcoming Reservation</h2>
                         <div class="empty-state">
-                            <i class="fa-solid fa-receipt"></i>
-                            <p>No orders yet.</p>
-                            <a href="<?php echo $baseUrl; ?>/php/forms/order_food.php" class="btn-primary">Order food</a>
+                            <i class="fa-solid fa-calendar-plus" style="font-size:2rem;margin-bottom:0.75rem;color:var(--text-muted);"></i>
+                            <p>No upcoming reservations.</p>
+                            <a href="<?php echo $baseUrl; ?>/php/forms/browse_restaurants.php" class="btn-primary">Browse Restaurants</a>
                         </div>
                     </div>
                     <?php endif; ?>
                 </section>
                 <?php endif; ?>
-                <h2 class="section-title quick-links-title">Quick links</h2>
-                <div class="card-container">
-                    <a href="<?php echo $baseUrl; ?>/php/forms/order_food.php" class="card card-link">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" aria-hidden="true"><path d="M575.8 255.5c0 18-15 32.1-32 32.1h-32l.7 160.2c0 2.7-.2 5.4-.5 8.1V472c0 22.1-17.9 40-40 40H456c-1.1 0-2.2 0-3.3-.1c-1.4 .1-2.8 .1-4.2 .1H416 392c-22.1 0-40-17.9-40-40V448 384c0-17.7-14.3-32-32-32H256c-17.7 0-32 14.3-32 32v64 24c0 22.1-17.9 40-40 40H160 128.1c-1.5 0-3-.1-4.5-.2c-1.2 .1-2.4 .2-3.6 .2H104c-22.1 0-40-17.9-40-40V360c0-.9 0-1.9 .1-2.8V287.6H32c-18 0-32-14-32-32.1c0-9 3-17 10-24L26.6 53.3c7-15 21-25.3 39.4-25.3H510c18.4 0 32.4 10.3 39.4 25.3l16.4 178.3c7 7 10 15 10 24zM176 256c-17.7 0-32 14.3-32 32s14.3 32 32 32H400c17.7 0 32-14.3 32-32s-14.3-32-32-32H176zM32 480h32c17.7 0 32-14.3 32-32s-14.3-32-32-32H32c-17.7 0-32 14.3-32 32s14.3 32 32 32z"/></svg>
-                        <h3>Order Food</h3>
-                        <p>Browse menus and place orders.</p>
-                    </a>
-                    <a href="<?php echo $baseUrl; ?>/php/forms/order_history.php" class="card card-link">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" aria-hidden="true"><path d="M64 0C28.7 0 0 28.7 0 64V448c0 35.3 28.7 64 64 64H320c35.3 0 64-28.7 64-64V64c0-35.3-28.7-64-64-64H64zM96 64H288c17.7 0 32 14.3 32 32v32c0 17.7-14.3 32-32 32H96c-17.7 0-32-14.3-32-32V96c0-17.7 14.3-32 32-32z"/></svg>
-                        <h3>Order History</h3>
-                        <p>View and track your orders.</p>
-                    </a>
-                    <a href="<?php echo $baseUrl; ?>/php/forms/favorites.php" class="card card-link">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" aria-hidden="true"><path d="M47.6 300.4L228.3 469.1c7.5 7 17.4 10.9 27.7 10.9s20.2-3.9 27.7-10.9L464.4 300.4c30.4-28.3 47.6-68 47.6-109.5v-5.8c0-69.9-50.5-129.5-119.4-141C347 36.5 300.6 51.4 268 84L256 96 244 84c-32.6-32.6-79-47.5-124.6-39.9C50.5 55.6 0 115.2 0 185.1v5.8c0 41.5 17.2 81.2 47.6 109.5z"/></svg>
-                        <h3>Favorites</h3>
-                        <p>Your saved items.</p>
-                    </a>
-                    <a href="<?php echo $baseUrl; ?>/php/forms/payment_methods.php" class="card card-link">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" aria-hidden="true"><path d="M64 32C28.7 32 0 60.7 0 96v320c0 35.3 28.7 64 64 64h448c35.3 0 64-28.7 64-64V96c0-35.3-28.7-64-64-64H64z"/></svg>
-                        <h3>Payment Methods</h3>
-                        <p>Manage payment options.</p>
-                    </a>
-                </div>
+
+                <?php if (!empty($latestRestaurants)): ?>
+                <section class="dashboard-section" aria-label="Latest Restaurants">
+                    <div class="dashboard-section-header">
+                        <h2 class="section-title">Latest Restaurants</h2>
+                        <a href="<?php echo $baseUrl; ?>/php/forms/browse_restaurants.php" class="section-link">View All <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                    <div class="dashboard-restaurants-grid">
+                        <?php foreach ($latestRestaurants as $rest): ?>
+                        <div class="restaurant-card card-interactive">
+                            <div class="restaurant-card-img">
+                                <?php if (!empty($rest['image_path'])): ?>
+                                    <img src="<?php echo $baseUrl . '/' . htmlspecialchars($rest['image_path']); ?>" alt="<?php echo htmlspecialchars($rest['name']); ?>">
+                                <?php else: ?>
+                                    <div class="no-img"><i class="fa-solid fa-utensils"></i></div>
+                                <?php endif; ?>
+                            </div>
+                            <div class="restaurant-card-body">
+                                <div class="restaurant-card-header">
+                                    <h3><?php echo htmlspecialchars($rest['name']); ?></h3>
+                                    <span class="restaurant-rating"><i class="fa-solid fa-star"></i> <?php echo number_format((float)$rest['rating'], 1); ?></span>
+                                </div>
+                                <p class="restaurant-cuisine"><i class="fa-solid fa-tag"></i> <?php echo htmlspecialchars($rest['cuisine_type'] ?: 'General'); ?></p>
+                                <p class="restaurant-address"><i class="fa-solid fa-location-dot"></i> <?php echo htmlspecialchars($rest['address'] ?: 'Address not available'); ?></p>
+                                <div class="restaurant-meta">
+                                    <span><i class="fa-solid fa-clock"></i> <?php echo substr($rest['opening_time'], 0, 5); ?> &ndash; <?php echo substr($rest['closing_time'], 0, 5); ?></span>
+                                    <span class="price-range"><?php echo htmlspecialchars($rest['price_range'] ?: '$$'); ?></span>
+                                </div>
+                                <a href="<?php echo $baseUrl; ?>/php/forms/make_reservation.php?restaurant_id=<?php echo $rest['id']; ?>" class="btn-primary" style="width:100%;margin-top:1rem;text-decoration:none;text-align:center;display:block;">
+                                    <i class="fa-solid fa-calendar-plus"></i> Reserve a Table
+                                </a>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                </section>
+                <?php endif; ?>
+
+                <?php if (!empty($latestReservations)): ?>
+                <section class="dashboard-section" aria-label="Latest Reservations">
+                    <div class="dashboard-section-header">
+                        <h2 class="section-title">Latest Reservations</h2>
+                        <a href="<?php echo $baseUrl; ?>/php/forms/my_reservations.php" class="section-link">View All <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                    <div class="reservations-list">
+                        <?php foreach ($latestReservations as $rv): ?>
+                        <div class="reservation-card">
+                            <div class="reservation-date-badge">
+                                <span class="date-month"><?php echo date('M', strtotime($rv['reservation_date'])); ?></span>
+                                <span class="date-day"><?php echo date('d', strtotime($rv['reservation_date'])); ?></span>
+                            </div>
+                            <div class="reservation-card-body">
+                                <h3><?php echo htmlspecialchars($rv['restaurant_name']); ?></h3>
+                                <p><i class="fa-solid fa-clock"></i> <?php echo date('g:i A', strtotime($rv['reservation_time'])); ?></p>
+                                <p><i class="fa-solid fa-users"></i> <?php echo $rv['party_size']; ?> guests</p>
+                            </div>
+                            <div class="reservation-card-right">
+                                <span class="status-badge status-<?php echo $rv['status']; ?>"><?php echo ucfirst($rv['status']); ?></span>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                </section>
+                <?php endif; ?>
+
+
+
             <?php elseif ($userRole === 'admin'): ?>
-                <div class="card-container">
-                    <a href="<?php echo $baseUrl; ?>/php/admin/orders.php" class="card card-link">
-                        <h3>Manage Orders</h3>
-                        <p>View and update order status.</p>
+                <h2 class="section-title quick-links-title">Management</h2>
+                <div class="quick-links-grid">
+                    <a href="<?php echo $baseUrl; ?>/php/admin/restaurants.php" class="quick-link card-interactive">
+                        <div class="ql-icon"><i class="fa-solid fa-store"></i></div>
+                        <span class="ql-label">Manage Restaurants</span>
                     </a>
-                    <a href="<?php echo $baseUrl; ?>/php/admin/restaurants.php" class="card card-link">
-                        <h3>Restaurants</h3>
-                        <p>Add or edit restaurants.</p>
+                    <a href="<?php echo $baseUrl; ?>/php/admin/tables.php" class="quick-link card-interactive">
+                        <div class="ql-icon"><i class="fa-solid fa-chair"></i></div>
+                        <span class="ql-label">Manage Tables</span>
                     </a>
-                    <a href="<?php echo $baseUrl; ?>/php/admin/menu.php" class="card card-link">
-                        <h3>Menu Items</h3>
-                        <p>Manage menu items per restaurant.</p>
-                    </a>
-                    <a href="<?php echo $baseUrl; ?>/php/pages/users/admin/users/index.php" class="card card-link">
-                        <h3>Manage Users</h3>
-                        <p>View users and submit deletion requests.</p>
-                    </a>
-                    <a href="<?php echo $baseUrl; ?>/php/pages/users/admin/approvals.php" class="card card-link">
-                        <h3>My Requests</h3>
-                        <p>Track your approval requests.</p>
+                    <a href="<?php echo $baseUrl; ?>/php/admin/reservations.php" class="quick-link card-interactive">
+                        <div class="ql-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                        <span class="ql-label">All Reservations</span>
                     </a>
                 </div>
+
             <?php else: ?>
-                <div class="card-container">
-                    <a href="<?php echo $baseUrl; ?>/php/superadmin/index.php" class="card card-link">
-                        <h3>Users & Roles</h3>
-                        <p>Manage all users and assign roles.</p>
+                <h2 class="section-title quick-links-title">System Administration</h2>
+                <div class="quick-links-grid">
+                    <a href="<?php echo $baseUrl; ?>/php/superadmin/users.php" class="quick-link card-interactive">
+                        <div class="ql-icon"><i class="fa-solid fa-users"></i></div>
+                        <span class="ql-label">Users &amp; Roles</span>
                     </a>
-                    <a href="<?php echo $baseUrl; ?>/php/pages/users/superadmin/approvals/index.php" class="card card-link">
-                        <h3>Approval Requests</h3>
-                        <p>Review and approve or reject deletion requests.</p>
+                    <a href="<?php echo $baseUrl; ?>/php/superadmin/requests.php" class="quick-link card-interactive">
+                        <div class="ql-icon"><i class="fa-solid fa-user-shield"></i></div>
+                        <span class="ql-label">Block Requests</span>
                     </a>
-                    <a href="<?php echo $baseUrl; ?>/php/admin/index.php" class="card card-link">
-                        <h3>Admin Panel</h3>
-                        <p>Access admin features.</p>
+                    <a href="<?php echo $baseUrl; ?>/php/superadmin/logs.php" class="quick-link card-interactive">
+                        <div class="ql-icon"><i class="fa-solid fa-list"></i></div>
+                        <span class="ql-label">Login Logs</span>
+                    </a>
+                    <a href="<?php echo $baseUrl; ?>/php/admin/restaurants.php" class="quick-link card-interactive">
+                        <div class="ql-icon"><i class="fa-solid fa-store"></i></div>
+                        <span class="ql-label">Restaurants</span>
+                    </a>
+                    <a href="<?php echo $baseUrl; ?>/php/admin/reservations.php" class="quick-link card-interactive">
+                        <div class="ql-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                        <span class="ql-label">All Reservations</span>
                     </a>
                 </div>
             <?php endif; ?>
         </main>
         <?php include __DIR__ . '/../includes/layout/footer.php'; ?>
     </div>
-    <script>
-(function() {
-    var toggle = document.getElementById('sidebarToggle');
-    var overlay = document.getElementById('sidebarOverlay');
-    if (toggle && overlay) {
-        toggle.addEventListener('click', function() {
-            document.body.classList.toggle('sidebar-open');
-            overlay.classList.toggle('is-open', document.body.classList.contains('sidebar-open'));
-            overlay.setAttribute('aria-hidden', document.body.classList.contains('sidebar-open') ? 'false' : 'true');
-        });
-        overlay.addEventListener('click', function() {
-            document.body.classList.remove('sidebar-open');
-            overlay.classList.remove('is-open');
-            overlay.setAttribute('aria-hidden', 'true');
-        });
-    }
-})();
-    </script>
+
+<script>
+// Sidebar toggle
+const toggle = document.getElementById('sidebarToggle');
+const sidebar = document.querySelector('.dashboard-sidebar');
+const overlay = document.getElementById('sidebarOverlay');
+if (toggle && sidebar) {
+    toggle.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+    });
+    overlay.addEventListener('click', () => {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('active');
+    });
+}
+</script>
 </body>
 </html>

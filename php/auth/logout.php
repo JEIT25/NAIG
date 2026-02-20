@@ -20,7 +20,7 @@ session_unset();
 session_destroy();
 
 // Redirect to login
-$base = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/DAMALERIO';
+$base = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/NAIG';
 header('Location: ' . $base . '/php/auth/login.php');
 exit;
 ?>
