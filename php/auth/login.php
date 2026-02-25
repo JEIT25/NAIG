@@ -1,11 +1,15 @@
+<?php
+require_once __DIR__ . '/../includes/path_helper.php';
+$basePath = getBasePath(__FILE__);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In - NAIGO</title>
-    <link rel="stylesheet" href="../../css/serve_asset.php?file=design-system.css">
-    <link rel="stylesheet" href="../../css/serve_asset.php?file=login.css">
+    <link rel="stylesheet" href="<?php echo $basePath; ?>css/serve_asset.php?file=design-system.css">
+    <link rel="stylesheet" href="<?php echo $basePath; ?>css/serve_asset.php?file=login.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -101,6 +105,16 @@
         </div>
     </div>
 </div>
+<!-- ===== Lockout Modal (shown when too many failed attempts) ===== -->
+<div id="lockoutModal" class="lockout-modal-overlay">
+    <div class="lockout-modal">
+        <div class="lockout-modal-icon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h3>Too Many Failed Attempts</h3>
+        <p id="lockoutModalMessage"></p>
+    </div>
+</div>
 <?php include __DIR__ . '/../includes/layout/footer.php'; ?>
 
 <!-- ===== Enhanced Forgot Password Modal ===== -->
@@ -147,7 +161,7 @@
 
             <div class="form-group">
                 <label for="fpOtp">Verification Code</label>
-                <input type="text" id="fpOtp" placeholder="000000" maxlength="6" style="text-align: center; letter-spacing: 0.2em; font-size: 1.2rem;">
+                <input type="password" id="fpOtp" placeholder="000000" maxlength="6" style="text-align: center; letter-spacing: 0.2em; font-size: 1.2rem;">
             </div>
             <span id="fpStep3Error" class="error-text"></span>
             <button class="fp-btn" id="fpStep3Btn">VERIFY CODE</button>

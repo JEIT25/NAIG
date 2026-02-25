@@ -72,26 +72,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit;
     }
     $stmt->close();
-    
+
     // --- END DUPLICATE CHECK ---
 
-    // New users are always consumers; admin/superadmin are set manually in DB
+    // New users from public signup are always consumers; admin/superadmin are set manually in DB
     $role = 'consumer';
 
     // Prepare SQL statement (includes role and all security questions)
+    // New public registrations start as blocked (is_blocked = 1) until approved
     $sql = "INSERT INTO users (
                 id, firstName, lastName, middleInitial, extension,
-                purok, barangay, city, province, zipCode, country, 
-                username, email, password, birthdate, age, 
-                secure_question, secure_answer, secure_question2, secure_answer2, 
-                secure_question3, secure_answer3, role
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                purok, barangay, city, province, zipCode, country,
+                username, email, password, birthdate, age,
+                secure_question, secure_answer, secure_question2, secure_answer2,
+                secure_question3, secure_answer3, role, is_blocked
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($sql);
 
     if ($stmt) {
+        $isBlocked = 1; // pending approval
         $stmt->bind_param(
-            'sssssssssssssssssssssis', // 23 params
+            'sssssssssssssssssssssssi', // 24 params: 23 strings, 1 int (is_blocked)
             $id,
             $firstName,
             $lastName,
@@ -114,21 +116,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $secure_answer2Hashed,
             $secure_question3,
             $secure_answer3Hashed,
-            $role
+            $role,
+            $isBlocked
         );
 
         if ($stmt->execute()) {
-            echo "User successfully registered!";
-        } else {
+            // After creating the user, create a registration approval request
+            $reason = 'New consumer registration';
+            $approval = $conn->prepare("INSERT INTO approvals (requested_by, action_type, target_type, target_id, reason, status) VALUES (?, 'register_consumer', 'user', ?, ?, 'pending')");
+            if ($approval) {
+                $approval->bind_param('sss', $id, $id, $reason);
+                $approval->execute();
+                $approval->close();
+            }
+            echo "Registration submitted for approval!";
+        }
+        else {
             if ($conn->errno == 1062) {
                 echo "An error occurred: Duplicate entry for a unique field.";
-            } else {
+            }
+            else {
                 echo "Signup failed. Please try again. Error: " . $stmt->error;
             }
         }
 
         $stmt->close();
-    } else {
+    }
+    else {
         die("Database Error: " . $conn->error);
     }
 

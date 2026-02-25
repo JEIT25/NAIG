@@ -7,6 +7,8 @@
  * (Version: Enhanced Flow v1.1)
  */
 session_start();
+require_once __DIR__ . '/../includes/path_helper.php';
+$basePath = getBasePath(__FILE__);
 ?>
 
 <!DOCTYPE html>
@@ -14,8 +16,8 @@ session_start();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../../css/serve_asset.php?file=design-system.css">
-    <link rel="stylesheet" href="../../css/serve_asset.php?file=login.css">
+    <link rel="stylesheet" href="<?php echo $basePath; ?>css/serve_asset.php?file=design-system.css">
+    <link rel="stylesheet" href="<?php echo $basePath; ?>css/serve_asset.php?file=login.css">
     <title>Forgot Password - FoodGrab</title>
     <style>
         .step-container { display: none; }
@@ -101,7 +103,7 @@ session_start();
                 <form id="formStep3" onsubmit="handleStep3(event)">
                     <div class="form-group">
                         <label for="otp_code">Verification Code:</label>
-                        <input type="text" id="otp_code" name="otp_code" required
+                        <input type="password" id="otp_code" name="otp_code" required
                                placeholder="000000" maxlength="6" pattern="[0-9]{6}"
                                autocomplete="one-time-code" style="text-align: center; letter-spacing: 0.5em; font-size: 1.25rem;">
                     </div>

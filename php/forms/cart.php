@@ -1,11 +1,9 @@
 <?php
 session_start();
-require_once __DIR__ . '/../includes/auth.php';
-requireLogin();
-if (!hasRole('consumer')) {
-    header('Location: ' . getDashboardRedirect());
-    exit;
-}
+require_once __DIR__ . '/../includes/auth_check.php';
+requireRole('consumer');
+
+$basePath = getBasePath(__FILE__);
 $pageTitle = 'My Cart';
 ?>
 <!DOCTYPE html>
@@ -14,8 +12,8 @@ $pageTitle = 'My Cart';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Cart - FoodGrab</title>
-    <link rel="stylesheet" href="../../css/design-system.css">
-    <link rel="stylesheet" href="../../css/dashboard.css">
+    <link rel="stylesheet" href="<?php echo $basePath; ?>css/serve_asset.php?file=design-system.css">
+    <link rel="stylesheet" href="<?php echo $basePath; ?>css/serve_asset.php?file=dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .cart-container { max-width: 900px; margin: 2rem auto; }

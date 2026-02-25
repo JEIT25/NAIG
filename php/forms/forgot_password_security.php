@@ -4,6 +4,8 @@
  * Verify user identity via security questions
  */
 session_start();
+require_once __DIR__ . '/../includes/path_helper.php';
+$basePath = getBasePath(__FILE__);
 require_once '../database/db_connect.php';
 
 // Check if OTP was verified
@@ -67,8 +69,8 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../../css/serve_asset.php?file=design-system.css">
-    <link rel="stylesheet" href="../../css/serve_asset.php?file=login.css">
+    <link rel="stylesheet" href="<?php echo $basePath; ?>css/serve_asset.php?file=design-system.css">
+    <link rel="stylesheet" href="<?php echo $basePath; ?>css/serve_asset.php?file=login.css">
     <title>Security Questions - FoodGrab</title>
 </head>
 

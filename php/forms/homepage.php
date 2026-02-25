@@ -1,3 +1,7 @@
+<?php
+require_once __DIR__ . '/../includes/path_helper.php';
+$basePath = getBasePath(__FILE__);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,8 +9,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NAIGO - Online Restaurant Reservation</title>
     <meta name="description" content="NAIGO - Reserve your table at the finest restaurants. Instant confirmation, exclusive dining experiences.">
-    <link rel="stylesheet" href="../../css/serve_asset.php?file=design-system.css">
-    <link rel="stylesheet" href="../../css/serve_asset.php?file=homepage.css">
+    <link rel="stylesheet" href="<?php echo $basePath; ?>css/serve_asset.php?file=design-system.css">
+    <link rel="stylesheet" href="<?php echo $basePath; ?>css/serve_asset.php?file=homepage.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>

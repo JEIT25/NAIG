@@ -146,6 +146,7 @@ CREATE TABLE `user_block_requests` (
   `target_id` varchar(20) NOT NULL,
   `reason` text DEFAULT NULL,
   `status` enum('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  `request_type` enum('block','unblock') NOT NULL DEFAULT 'block',
   `reviewed_by` varchar(20) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
@@ -249,5 +250,130 @@ INSERT INTO `restaurant_tables` (`restaurant_id`, `table_number`, `capacity`, `l
 (5, 'T4', 4, 'indoor', 1), (5, 'T5', 6, 'indoor', 1), (5, 'T6', 8, 'indoor', 1),
 (5, 'O1', 4, 'outdoor', 1), (5, 'O2', 6, 'outdoor', 1),
 (5, 'VIP1', 10, 'private', 1), (5, 'VIP2', 14, 'private', 1);
+
+
+-- =====================================================
+-- TABLE: menu_items
+-- =====================================================
+CREATE TABLE `menu_items` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `restaurant_id` int(11) NOT NULL,
+  `name` varchar(200) NOT NULL,
+  `description` text DEFAULT NULL,
+  `price` decimal(10,2) NOT NULL,
+  `image_path` varchar(500) DEFAULT NULL,
+  `is_available` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `restaurant_id` (`restaurant_id`),
+  CONSTRAINT `menu_items_ibfk_1` FOREIGN KEY (`restaurant_id`) REFERENCES `restaurants` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =====================================================
+-- TABLE: cart
+-- =====================================================
+CREATE TABLE `cart` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` varchar(20) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `cart_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =====================================================
+-- TABLE: cart_items
+-- =====================================================
+CREATE TABLE `cart_items` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `cart_id` int(11) NOT NULL,
+  `menu_item_id` int(11) NOT NULL,
+  `quantity` int(11) NOT NULL DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `cart_id` (`cart_id`),
+  KEY `menu_item_id` (`menu_item_id`),
+  CONSTRAINT `cart_items_ibfk_1` FOREIGN KEY (`cart_id`) REFERENCES `cart` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `cart_items_ibfk_2` FOREIGN KEY (`menu_item_id`) REFERENCES `menu_items` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =====================================================
+-- TABLE: orders
+-- =====================================================
+CREATE TABLE `orders` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` varchar(20) NOT NULL,
+  `restaurant_id` int(11) NOT NULL,
+  `total_amount` decimal(10,2) NOT NULL,
+  `delivery_address` text NOT NULL,
+  `notes` text DEFAULT NULL,
+  `status` enum('pending','confirmed','preparing','out_for_delivery','delivered','cancelled') NOT NULL DEFAULT 'pending',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  KEY `restaurant_id` (`restaurant_id`),
+  CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `orders_ibfk_2` FOREIGN KEY (`restaurant_id`) REFERENCES `restaurants` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =====================================================
+-- TABLE: order_items
+-- =====================================================
+CREATE TABLE `order_items` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `order_id` int(11) NOT NULL,
+  `menu_item_id` int(11) NOT NULL,
+  `quantity` int(11) NOT NULL,
+  `unit_price` decimal(10,2) NOT NULL,
+  `subtotal` decimal(10,2) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `order_id` (`order_id`),
+  KEY `menu_item_id` (`menu_item_id`),
+  CONSTRAINT `order_items_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `order_items_ibfk_2` FOREIGN KEY (`menu_item_id`) REFERENCES `menu_items` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =====================================================
+-- TABLE: payment_methods
+-- =====================================================
+CREATE TABLE `payment_methods` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` varchar(20) NOT NULL,
+  `type` varchar(50) NOT NULL DEFAULT 'gcash',
+  `label` varchar(100) NOT NULL,
+  `details` varchar(255) DEFAULT NULL,
+  `is_default` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `payment_methods_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =====================================================
+-- TABLE: user_favorites
+-- =====================================================
+CREATE TABLE `user_favorites` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` varchar(20) NOT NULL,
+  `menu_item_id` int(11) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `user_item` (`user_id`,`menu_item_id`),
+  KEY `menu_item_id` (`menu_item_id`),
+  CONSTRAINT `user_favorites_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `user_favorites_ibfk_2` FOREIGN KEY (`menu_item_id`) REFERENCES `menu_items` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =====================================================
+-- SEED DATA: Menu Items (Sample)
+-- =====================================================
+INSERT INTO `menu_items` (`restaurant_id`, `name`, `description`, `price`, `is_available`) VALUES
+(1, 'Aristocrat Classic Chicken Barbecue', '3pcs Chicken Barbecue with Java Rice, Java Sauce, and Atchara.', 395.00, 1),
+(1, 'Pork Barbecue', '2 sticks of Pork Barbecue with Java Rice.', 220.00, 1),
+(2, 'Lechon Oyster Sisig', 'Fresh oysters and lechon kawali with various spices.', 650.00, 1),
+(2, 'Sizzling Sinigang', 'Beef short ribs with sampaloc gravy.', 720.00, 1),
+(3, 'House Crispy Sisig', 'Manam’s signature crispy sisig.', 295.00, 1),
+(3, 'Sinigang na Baboy sa Ube', 'Classic sinigang with a unique ube twist.', 450.00, 1);
 
 COMMIT;

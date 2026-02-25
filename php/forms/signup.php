@@ -1,11 +1,15 @@
+<?php
+require_once __DIR__ . '/../includes/path_helper.php';
+$basePath = getBasePath(__FILE__);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Account - NAIGO</title>
-    <link rel="stylesheet" href="../../css/serve_asset.php?file=design-system.css&v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="../../css/serve_asset.php?file=signup.css&v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="<?php echo $basePath; ?>css/serve_asset.php?file=design-system.css">
+    <link rel="stylesheet" href="<?php echo $basePath; ?>css/serve_asset.php?file=signup.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -51,14 +55,16 @@
                     </li>
                 </ul>
                 <form class="signup-form" id="signUpForm" method="POST">
-                    <!-- Success Modal -->
+                    <!-- Success / Waiting for Approval Modal -->
                     <div id="successModal" class="modal-simple-alert">
                         <div class="modal-simple-alert-content">
                             <svg class="success-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="#059669" width="4em" height="4em">
                                 <path d="M256 512C397.4 512 512 397.4 512 256C512 114.6 397.4 0 256 0C114.6 0 0 114.6 0 256C0 397.4 114.6 512 256 512zM369 209L241 337c-9.4 9.4-24.6 9.4-33.9 0l-64-64c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l47 47L335 175c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z"/>
                             </svg>
-                            <span class="modal-simple-alert-text">Account created successfully!</span>
-                            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">Redirecting to login...</p>
+                            <span class="modal-simple-alert-text">Registration submitted for approval.</span>
+                            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem; max-width: 340px;">
+                                Your account is now pending review by an administrator or superadmin. You will be able to log in once your registration has been approved.
+                            </p>
                         </div>
                     </div>
 

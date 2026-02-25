@@ -173,7 +173,7 @@ exit;
 
             <div class="form-group">
                 <label for="fpOtp">Verification Code</label>
-                <input type="text" id="fpOtp" placeholder="000000" maxlength="6" style="text-align: center; letter-spacing: 0.2em; font-size: 1.2rem;">
+                <input type="password" id="fpOtp" placeholder="000000" maxlength="6" style="text-align: center; letter-spacing: 0.2em; font-size: 1.2rem;">
             </div>
             <span id="fpStep3Error" class="error-text"></span>
             <button class="fp-btn" id="fpStep3Btn">VERIFY CODE</button>

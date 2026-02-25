@@ -78,6 +78,7 @@ echo json_encode([
     'reservations' => $reservations,
     'total' => intval($total),
     'page' => $page,
-    'pages' => ceil($total / $limit)
+    'pages' => ceil($total / $limit),
+    'total_pages' => ceil($total / $limit)
 ]);
 $conn->close();

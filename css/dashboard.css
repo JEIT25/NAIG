@@ -850,3 +850,64 @@ body {
     box-shadow: var(--shadow-md);
     text-align: center;
 }
+
+/* Quick Links Grid (Admin/Superadmin) */
+.quick-links-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.quick-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: 2rem 1.5rem;
+    text-decoration: none;
+    color: var(--text-main);
+    border: 1px solid var(--border-light);
+    transition: all var(--transition-base);
+    text-align: center;
+}
+
+.quick-link:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-3px);
+}
+
+.ql-icon {
+    width: 56px;
+    height: 56px;
+    background: var(--primary-light);
+    color: var(--primary-color);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all var(--transition-base);
+}
+
+.quick-link:hover .ql-icon {
+    background: var(--primary-color);
+    color: #fff;
+}
+
+.ql-label {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-heading);
+}
+
+/* Responsive adjustments for quick links */
+@media (max-width: 480px) {
+    .quick-links-grid {
+        grid-template-columns: 1fr;
+    }
+}

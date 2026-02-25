@@ -1,11 +1,9 @@
 <?php
 session_start();
-require_once __DIR__ . '/../includes/auth.php';
-requireLogin();
-if (!hasRole('consumer')) {
-    header('Location: ' . getDashboardRedirect());
-    exit;
-}
+require_once __DIR__ . '/../includes/auth_check.php';
+requireRole('consumer');
+
+$basePath = getBasePath(__FILE__);
 $pageTitle = 'Checkout';
 $user = $_SESSION['user'];
 $delivery_address = trim(
@@ -23,8 +21,8 @@ $delivery_address = trim(
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout - FoodGrab</title>
-    <link rel="stylesheet" href="../../css/design-system.css">
-    <link rel="stylesheet" href="../../css/dashboard.css">
+    <link rel="stylesheet" href="<?php echo $basePath; ?>css/serve_asset.php?file=design-system.css">
+    <link rel="stylesheet" href="<?php echo $basePath; ?>css/serve_asset.php?file=dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .checkout-grid { display: grid; grid-template-columns: 1fr 380px; gap: 2rem; max-width: 900px; margin: 0 auto; align-items: start; }

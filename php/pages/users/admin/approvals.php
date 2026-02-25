@@ -33,7 +33,7 @@ $pageTitle = 'My Requests';
             <div class="page-header">
                 <a href="users/index.php" class="back-link"><i class="fa-solid fa-arrow-left"></i> Back to Users</a>
                 <h1><i class="fa-solid fa-clipboard-list"></i> My Requests</h1>
-                <p>Track your deletion requests and superadmin responses</p>
+                <p>Track your requests (such as deletions) and superadmin responses.</p>
             </div>
             <div class="approvals-toolbar">
                 <div class="search-container">

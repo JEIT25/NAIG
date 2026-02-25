@@ -797,12 +797,13 @@ registerForm.addEventListener('submit', async function (e) {
                 body: formData
             });
             const data = await response.text();
+            const trimmed = data.trim();
 
-            // Check if exact success string matches your PHP output
-            if (data.trim() === "User successfully registered!") {
+            // Treat either legacy or new success messages as success
+            if (trimmed === "User successfully registered!" || trimmed.startsWith("Registration submitted")) {
 
                 // TRIGGER THE CLEAN SUCCESS DISPLAY
-                showSuccessMessage(data);
+                showSuccessMessage(trimmed);
 
                 // Redirect after 3 seconds
                 setTimeout(() => {

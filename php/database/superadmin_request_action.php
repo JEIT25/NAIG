@@ -26,16 +26,19 @@ try {
     $stmt->close();
 
     if ($action === 'approve') {
-        // Get target user id
-        $stmt = $conn->prepare("SELECT target_id FROM user_block_requests WHERE id = ?");
+        // Get target user id and request type
+        $stmt = $conn->prepare("SELECT target_id, request_type FROM user_block_requests WHERE id = ?");
         $stmt->bind_param('i', $request_id);
         $stmt->execute();
         $res = $stmt->get_result();
         if ($row = $res->fetch_assoc()) {
             $target_id = $row['target_id'];
-            // Block user
-            $stmt2 = $conn->prepare("UPDATE users SET is_blocked = 1 WHERE id = ?");
-            $stmt2->bind_param('s', $target_id);
+            $request_type = $row['request_type'] ?? 'block';
+
+            // Apply block or unblock based on request_type
+            $isBlocked = ($request_type === 'unblock') ? 0 : 1;
+            $stmt2 = $conn->prepare("UPDATE users SET is_blocked = ? WHERE id = ?");
+            $stmt2->bind_param('is', $isBlocked, $target_id);
             $stmt2->execute();
             $stmt2->close();
         }

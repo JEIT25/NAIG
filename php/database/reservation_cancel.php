@@ -8,7 +8,10 @@ header('Content-Type: application/json');
 
 $userId = $_SESSION['user']['id'];
 $userRole = $_SESSION['user']['role'];
-$reservationId = intval($_POST['reservation_id'] ?? 0);
+
+// Support JSON input (for Fetch API)
+$input = json_decode(file_get_contents('php://input'), true);
+$reservationId = intval($input['id'] ?? ($_POST['reservation_id'] ?? 0));
 
 if (!$reservationId) {
     echo json_encode(['success' => false, 'error' => 'Reservation ID is required.']);

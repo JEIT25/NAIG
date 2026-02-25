@@ -1,201 +1,285 @@
 /**
- * Superadmin - Approval Requests: list, approve/reject (AMORA-style)
+ * Superadmin/Admin - Approval Requests (AMORA-style, rebuilt)
+ * - Superadmin: can review all approvals (delete, register_consumer, etc.).
+ * - Admin: can review only registration approvals (enforced server-side).
  */
-document.addEventListener('DOMContentLoaded', function() {
-    const API_BASE = typeof API_BASE !== 'undefined' ? API_BASE : '';
+
+document.addEventListener('DOMContentLoaded', function () {
+    const API_BASE = (window.API_BASE || '');
     const container = document.getElementById('approvals-container');
     const paginationEl = document.getElementById('pagination');
     const statusFilters = document.querySelectorAll('.status-filter');
     const searchInput = document.getElementById('searchInput');
+
+    const reviewModal = document.getElementById('reviewApprovalModal');
+    const reviewTitle = document.getElementById('reviewApprovalTitle');
+    const reviewMessage = document.getElementById('reviewApprovalMessage');
+    const reviewNotes = document.getElementById('reviewApprovalNotes');
+    const reviewCancelBtn = document.getElementById('reviewApprovalCancel');
+    const reviewApproveBtn = document.getElementById('reviewApprovalApprove');
+    const reviewRejectBtn = document.getElementById('reviewApprovalReject');
+
     let currentPage = 1;
     let currentStatus = 'pending';
     let currentSearch = '';
     let searchTimeout = null;
-    let reviewModalApprovalId = null;
+    let currentApprovalId = null;
+    let currentAction = null; // 'approve' or 'reject'
 
     function escapeHtml(s) {
         if (s == null) return '';
-        var d = document.createElement('div');
+        const d = document.createElement('div');
         d.textContent = s;
         return d.innerHTML;
     }
+
     function formatDate(s) {
         if (!s) return '—';
-        var d = new Date(s);
+        const d = new Date(s);
         return isNaN(d.getTime()) ? s : d.toLocaleString();
     }
+
     function actionLabel(actionType) {
         if (actionType === 'delete_user') return 'Delete user';
         if (actionType === 'delete_restaurant') return 'Delete restaurant';
         if (actionType === 'delete_menu_item') return 'Delete menu item';
+        if (actionType === 'register_consumer') return 'New consumer registration';
         return actionType || 'Request';
     }
 
     function loadApprovals(page, status) {
         if (!container) return;
-        container.innerHTML = '<div class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading...</p></div>';
-        if (status === 'all') {
-            var search = currentSearch ? '&search=' + encodeURIComponent(currentSearch) : '';
-            Promise.all([
-                fetch(API_BASE + 'approval_list.php?status=pending&per_page=50' + search, { credentials: 'same-origin' }).then(function(r) { return r.json(); }),
-                fetch(API_BASE + 'approval_list.php?status=approved&per_page=50' + search, { credentials: 'same-origin' }).then(function(r) { return r.json(); }),
-                fetch(API_BASE + 'approval_list.php?status=rejected&per_page=50' + search, { credentials: 'same-origin' }).then(function(r) { return r.json(); })
-            ]).then(function(arr) {
-                var all = [];
-                arr.forEach(function(data) { if (data.success && data.approvals) all = all.concat(data.approvals); });
-                all.sort(function(a, b) { return new Date(b.created_at) - new Date(a.created_at); });
-                displayApprovals(all);
-                paginationEl.innerHTML = '';
-            }).catch(function() {
-                container.innerHTML = '<div class="empty-state"><p>Error loading.</p></div>';
-            });
-            return;
-        }
-        var url = API_BASE + 'approval_list.php?page=' + page + '&status=' + encodeURIComponent(status) + '&per_page=10';
-        if (currentSearch) url += '&search=' + encodeURIComponent(currentSearch);
-        fetch(url, { credentials: 'same-origin' })
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                if (data.success) {
-                    displayApprovals(data.approvals);
-                    displayPagination(data.pagination);
-                } else {
-                    container.innerHTML = '<div class="empty-state"><p>' + escapeHtml(data.error || 'Failed') + '</p></div>';
+        container.innerHTML =
+            '<div class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Loading...</p></div>';
+
+        const params = new URLSearchParams({
+            status: status,
+            page: String(page),
+            per_page: '10'
+        });
+        if (currentSearch) params.append('search', currentSearch);
+
+        fetch(API_BASE + 'approval_list.php?' + params.toString(), { credentials: 'same-origin' })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) {
+                    container.innerHTML =
+                        '<div class="empty-state"><p>' +
+                        escapeHtml(data.error || 'Failed to load requests.') +
+                        '</p></div>';
+                    return;
                 }
+                displayApprovals(data.approvals || []);
+                displayPagination(data.pagination);
             })
-            .catch(function() {
-                container.innerHTML = '<div class="empty-state"><p>Network error.</p></div>';
+            .catch(() => {
+                container.innerHTML =
+                    '<div class="empty-state"><p>Network error while loading requests.</p></div>';
             });
     }
 
     function displayApprovals(approvals) {
         if (!approvals || approvals.length === 0) {
-            container.innerHTML = '<div class="empty-state"><p>No requests found.</p></div>';
+            container.innerHTML =
+                '<div class="empty-state"><p>No requests found.</p></div>';
             return;
         }
-        container.innerHTML = approvals.map(function(a) {
-            var reviewer = (a.reviewer_firstName && a.reviewer_lastName) ? (a.reviewer_firstName + ' ' + a.reviewer_lastName) : null;
-            var requester = (a.requester_firstName && a.requester_lastName) ? (a.requester_firstName + ' ' + a.requester_lastName) : a.requested_by;
-            var reviewBlock = a.status !== 'pending' ? (
-                '<div class="approval-card-meta" style="margin-top:8px;padding-top:8px;border-top:1px solid #eee;">' +
-                'Reviewed by ' + escapeHtml(reviewer || '—') + ' at ' + formatDate(a.reviewed_at) +
-                (a.review_notes ? '<br>Notes: ' + escapeHtml(a.review_notes) : '') + '</div>'
-            ) : (
-                '<div class="approval-card-actions" style="margin-top:8px;">' +
-                '<button type="button" class="btn-sm btn-view review-approve" data-id="' + a.id + '"><i class="fa-solid fa-check"></i> Approve</button> ' +
-                '<button type="button" class="btn-sm btn-request-delete review-reject" data-id="' + a.id + '"><i class="fa-solid fa-times"></i> Reject</button>' +
-                '</div>'
-            );
-            return '<div class="approval-card" data-id="' + a.id + '">' +
-                '<div class="approval-card-title">' + actionLabel(a.action_type) + ' — ' + escapeHtml(a.target_type) + ' #' + escapeHtml(a.target_id) + '</div>' +
-                '<span class="approval-status ' + a.status + '">' + a.status + '</span>' +
-                '<div class="approval-card-meta">By ' + escapeHtml(requester) + ' · ' + formatDate(a.created_at) + '</div>' +
-                (a.reason ? '<p><strong>Reason:</strong> ' + escapeHtml(a.reason) + '</p>' : '') +
-                reviewBlock +
-                '</div>';
-        }).join('');
 
-        container.querySelectorAll('.review-approve').forEach(function(btn) {
-            btn.addEventListener('click', function() { openReviewModal(parseInt(this.dataset.id, 10), 'approve'); });
+        let html = '<table class="data-table"><thead><tr>' +
+            '<th>Requester</th>' +
+            '<th>Action</th>' +
+            '<th>Target</th>' +
+            '<th>Status</th>' +
+            '<th>Submitted</th>' +
+            '<th>Reviewed By</th>' +
+            '<th>Reason</th>' +
+            '<th>Action</th>' +
+            '</tr></thead><tbody>';
+
+        approvals.forEach(a => {
+            const status = a.status || 'pending';
+            const requester =
+                a.requester_firstName && a.requester_lastName
+                    ? a.requester_firstName + ' ' + a.requester_lastName
+                    : (a.requested_by || '');
+            const reviewer =
+                a.reviewer_firstName && a.reviewer_lastName
+                    ? a.reviewer_firstName + ' ' + a.reviewer_lastName
+                    : '';
+
+            let statusBadgeClass = 'status-pending';
+            if (status === 'approved') statusBadgeClass = 'status-ok';
+            if (status === 'rejected') statusBadgeClass = 'status-trash';
+
+            let actionButtons = '';
+            if (status === 'pending') {
+                actionButtons =
+                    '<button type="button" class="btn-secondary review-approve" data-id="' + a.id + '">Approve</button> ' +
+                    '<button type="button" class="btn-secondary review-reject" data-id="' + a.id + '">Reject</button>';
+            } else {
+                actionButtons = '<span class="muted small">No actions</span>';
+            }
+
+            html += '<tr data-id="' + a.id + '">' +
+                '<td>' + escapeHtml(requester) + '</td>' +
+                '<td>' + escapeHtml(actionLabel(a.action_type)) + '</td>' +
+                '<td>' + escapeHtml((a.target_type || '') + ' #' + (a.target_id || '')) + '</td>' +
+                '<td><span class="status-badge no-dot ' + statusBadgeClass + '">' + escapeHtml(status) + '</span></td>' +
+                '<td>' + formatDate(a.created_at) + '</td>' +
+                '<td>' + escapeHtml(reviewer) + '</td>' +
+                '<td>' + escapeHtml(a.reason || '') + '</td>' +
+                '<td>' + actionButtons + '</td>' +
+                '</tr>';
         });
-        container.querySelectorAll('.review-reject').forEach(function(btn) {
-            btn.addEventListener('click', function() { openReviewModal(parseInt(this.dataset.id, 10), 'reject'); });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+
+        // Wire action buttons
+        container.querySelectorAll('.review-approve').forEach(btn => {
+            btn.addEventListener('click', () => openReviewModal(btn.dataset.id, 'approve'));
+        });
+        container.querySelectorAll('.review-reject').forEach(btn => {
+            btn.addEventListener('click', () => openReviewModal(btn.dataset.id, 'reject'));
         });
     }
 
-    function displayPagination(p) {
-        if (!paginationEl || !p) return;
-        var totalPages = p.total_pages || 1;
-        var html = '';
-        if (currentPage > 1) html += '<button type="button" data-page="' + (currentPage - 1) + '">Prev</button>';
-        html += ' <span>Page ' + currentPage + ' of ' + totalPages + '</span> ';
-        if (currentPage < totalPages) html += '<button type="button" data-page="' + (currentPage + 1) + '">Next</button>';
+    function displayPagination(pagination) {
+        if (!paginationEl || !pagination) return;
+        const totalPages = pagination.total_pages || 1;
+        let html = '';
+        if (currentPage > 1) {
+            html += '<button type="button" data-page="' + (currentPage - 1) + '">Prev</button>';
+        }
+        html +=
+            ' <span>Page ' +
+            currentPage +
+            ' of ' +
+            totalPages +
+            '</span> ';
+        if (currentPage < totalPages) {
+            html += '<button type="button" data-page="' + (currentPage + 1) + '">Next</button>';
+        }
         paginationEl.innerHTML = html;
-        paginationEl.querySelectorAll('button').forEach(function(b) {
-            b.addEventListener('click', function() {
-                currentPage = parseInt(this.dataset.page, 10);
-                loadApprovals(currentPage, currentStatus);
+        paginationEl.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const page = parseInt(btn.dataset.page, 10);
+                if (!isNaN(page)) {
+                    currentPage = page;
+                    loadApprovals(currentPage, currentStatus);
+                }
             });
         });
     }
 
     function openReviewModal(approvalId, action) {
-        reviewModalApprovalId = approvalId;
-        var modal = document.getElementById('reviewApprovalModal');
-        var title = document.getElementById('reviewApprovalTitle');
-        var msg = document.getElementById('reviewApprovalMessage');
-        if (title) title.textContent = action === 'approve' ? 'Approve request' : 'Reject request';
-        if (msg) msg.textContent = action === 'approve' ? 'Add optional notes and confirm approval.' : 'Add optional notes and confirm rejection.';
-        var notes = document.getElementById('reviewApprovalNotes');
-        if (notes) notes.value = '';
-        if (modal) modal.classList.add('show');
+        currentApprovalId = parseInt(approvalId, 10);
+        currentAction = action;
+        if (!reviewModal) return;
+
+        if (reviewTitle)
+            reviewTitle.textContent =
+                action === 'approve' ? 'Approve request' : 'Reject request';
+        if (reviewMessage)
+            reviewMessage.textContent =
+                action === 'approve'
+                    ? 'Add optional notes and confirm approval.'
+                    : 'Add optional notes and confirm rejection.';
+        if (reviewNotes) reviewNotes.value = '';
+
+        reviewModal.classList.add('show');
+    }
+
+    function closeReviewModal() {
+        if (reviewModal) reviewModal.classList.remove('show');
+        currentApprovalId = null;
+        currentAction = null;
     }
 
     function submitReview(action) {
-        if (reviewModalApprovalId == null) return;
-        var notesEl = document.getElementById('reviewApprovalNotes');
-        var notes = notesEl && notesEl.value ? notesEl.value.trim() : '';
-        var fd = new FormData();
-        fd.append('approval_id', reviewModalApprovalId);
+        if (!currentApprovalId || !action) return;
+        const fd = new FormData();
+        fd.append('approval_id', String(currentApprovalId));
         fd.append('action', action);
-        fd.append('review_notes', notes);
-        fetch(API_BASE + 'approval_review.php', { method: 'POST', body: fd, credentials: 'same-origin' })
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                document.getElementById('reviewApprovalModal').classList.remove('show');
-                reviewModalApprovalId = null;
-                showNotification(data.success ? 'Success' : 'Error', data.message || data.error || (data.success ? 'Done.' : 'Failed'));
-                if (data.success) loadApprovals(currentPage, currentStatus);
+        fd.append('review_notes', reviewNotes ? reviewNotes.value.trim() : '');
+
+        fetch(API_BASE + 'approval_review.php', {
+            method: 'POST',
+            body: fd,
+            credentials: 'same-origin'
+        })
+            .then(r => r.json())
+            .then(data => {
+                closeReviewModal();
+                showNotification(
+                    data.success ? 'Success' : 'Error',
+                    data.message || data.error || (data.success ? 'Done.' : 'Failed.')
+                );
+                if (data.success) {
+                    loadApprovals(currentPage, currentStatus);
+                }
             })
-            .catch(function() {
+            .catch(() => {
                 showNotification('Error', 'Network error.');
             });
     }
 
     function showNotification(title, message) {
-        var modal = document.getElementById('notificationModal');
-        var titleEl = document.getElementById('notificationTitle');
-        var msgEl = document.getElementById('notificationMessage');
+        const modal = document.getElementById('notificationModal');
+        const titleEl = document.getElementById('notificationTitle');
+        const msgEl = document.getElementById('notificationMessage');
+        const footerBtn = document.getElementById('notificationFooterBtn');
+        if (!modal || !footerBtn) return;
+
         if (titleEl) titleEl.textContent = title;
         if (msgEl) msgEl.textContent = message;
-        if (modal) {
-            modal.classList.add('show');
-            modal.classList.toggle('error', title === 'Error');
-            modal.classList.toggle('success', title === 'Success');
-        }
-        var close = function() {
+        modal.classList.add('show');
+        modal.classList.toggle('error', title === 'Error');
+        modal.classList.toggle('success', title === 'Success');
+
+        const close = () => {
             modal.classList.remove('show');
-            document.getElementById('notificationFooterBtn').removeEventListener('click', close);
+            footerBtn.removeEventListener('click', close);
         };
-        document.getElementById('notificationFooterBtn').addEventListener('click', close);
+        footerBtn.addEventListener('click', close);
     }
 
-    document.getElementById('reviewApprovalCancel') && document.getElementById('reviewApprovalCancel').addEventListener('click', function() {
-        document.getElementById('reviewApprovalModal').classList.remove('show');
-        reviewModalApprovalId = null;
-    });
-    document.getElementById('reviewApprovalApprove') && document.getElementById('reviewApprovalApprove').addEventListener('click', function() { submitReview('approve'); });
-    document.getElementById('reviewApprovalReject') && document.getElementById('reviewApprovalReject').addEventListener('click', function() { submitReview('reject'); });
+    // Wire modal buttons
+    if (reviewCancelBtn) {
+        reviewCancelBtn.addEventListener('click', closeReviewModal);
+    }
+    if (reviewApproveBtn) {
+        reviewApproveBtn.addEventListener('click', () => submitReview('approve'));
+    }
+    if (reviewRejectBtn) {
+        reviewRejectBtn.addEventListener('click', () => submitReview('reject'));
+    }
 
-    statusFilters.forEach(function(btn) {
+    // Status filters
+    statusFilters.forEach(btn => {
         if (btn.dataset.status === currentStatus) btn.classList.add('active');
-        btn.addEventListener('click', function() {
-            statusFilters.forEach(function(f) { f.classList.remove('active'); });
-            this.classList.add('active');
-            currentStatus = this.dataset.status;
+        btn.addEventListener('click', () => {
+            statusFilters.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentStatus = btn.dataset.status;
             currentPage = 1;
             loadApprovals(currentPage, currentStatus);
         });
     });
+
+    // Search
     if (searchInput) {
-        searchInput.addEventListener('input', function() {
+        searchInput.addEventListener('input', () => {
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(function() {
+            searchTimeout = setTimeout(() => {
                 currentSearch = searchInput.value.trim();
                 currentPage = 1;
                 loadApprovals(currentPage, currentStatus);
             }, 400);
         });
     }
-    loadApprovals(1, currentStatus);
+
+    // Initial load
+    loadApprovals(currentPage, currentStatus);
 });
+

@@ -102,33 +102,70 @@ if ($isFormSubmission) {
 
         if ($result->num_rows > 0) {
             $user = $result->fetch_assoc();
-            $storedHash = $user['password'] ?? '';
-            if ($storedHash !== '' && password_verify($password, $storedHash)) {
-                if (!array_key_exists('role', $user)) {
-                    $user['role'] = 'consumer';
-                }
-                $_SESSION['user'] = $user;
-                $_SESSION['failed_attempts'] = 0;
-                $_SESSION['lockout_time'] = 0; // Reset lockout on success
 
-                // Log successful login
-                logUserAction($user['id'], 'login');
+            // Determine if the account is currently blocked
+            $isBlocked = !empty($user['is_blocked']) && (int)$user['is_blocked'] === 1;
+            $regStatus = null;
 
-                $base = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/NAIG';
-
-                // Role-based redirection
-                if ($user['role'] === 'admin') {
-                    $response['redirect'] = $base . '/php/admin/index.php';
-                }
-                elseif ($user['role'] === 'superadmin') {
-                    $response['redirect'] = $base . '/php/superadmin/index.php';
-                }
-                else {
-                    $response['redirect'] = $base . '/php/auth/dashboard.php';
+            // Only check registration approvals if the account is blocked.
+            // This allows manual unblocking (is_blocked = 0) to always override pending/old approvals.
+            if ($isBlocked) {
+                $regStmt = $conn->prepare("SELECT status FROM approvals WHERE action_type = 'register_consumer' AND target_type = 'user' AND target_id = ? ORDER BY created_at DESC LIMIT 1");
+                if ($regStmt) {
+                    $regStmt->bind_param('s', $user['id']);
+                    $regStmt->execute();
+                    $regRes = $regStmt->get_result();
+                    if ($row = $regRes->fetch_assoc()) {
+                        $regStatus = $row['status'] ?? null;
+                    }
+                    $regStmt->close();
                 }
             }
-            else {
-                handleFailedLogin(false, false, $response, $usernameOrEmail);
+
+            // Show more specific messages for blocked accounts created via registration
+            if ($isBlocked && $regStatus === 'pending') {
+                $response['error'] = 'Your account is pending approval. Please wait for an administrator or superadmin to approve your registration.';
+                // Do NOT increment failed attempts or start lockout timer here
+            } elseif ($isBlocked && $regStatus === 'rejected') {
+                $response['error'] = 'Your registration request was rejected. Please contact system administrator or superadmin for more information.';
+            }
+            // Generic blocked-account handling (for any blocked user without a specific registration status)
+            elseif ($isBlocked) {
+                $role = $user['role'] ?? 'consumer';
+                if ($role === 'admin' || $role === 'superadmin') {
+                    $response['error'] = 'Account has been disabled, please contact system superadmin.';
+                } else {
+                    $response['error'] = 'Account has been disabled, please contact system administrator or superadmin.';
+                }
+                // Do NOT increment failed attempts or start lockout timer here
+            } else {
+                $storedHash = $user['password'] ?? '';
+                if ($storedHash !== '' && password_verify($password, $storedHash)) {
+                    if (!array_key_exists('role', $user)) {
+                        $user['role'] = 'consumer';
+                    }
+                    $_SESSION['user'] = $user;
+                    $_SESSION['failed_attempts'] = 0;
+                    $_SESSION['lockout_time'] = 0; // Reset lockout on success
+
+                    // Log successful login
+                    logUserAction($user['id'], 'login');
+
+                    $base = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/NAIG';
+
+                    // Role-based redirection
+                    if ($user['role'] === 'admin') {
+                        $response['redirect'] = $base . '/php/admin/index.php';
+                    }
+                    elseif ($user['role'] === 'superadmin') {
+                        $response['redirect'] = $base . '/php/superadmin/index.php';
+                    }
+                    else {
+                        $response['redirect'] = $base . '/php/auth/dashboard.php';
+                    }
+                } else {
+                    handleFailedLogin(false, false, $response, $usernameOrEmail);
+                }
             }
         }
         else {

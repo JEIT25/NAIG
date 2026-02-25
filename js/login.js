@@ -3,7 +3,9 @@
  * Handles: login form submit, lockout timer, password toggle, forgot password 4-step flow
  */
 (function () {
-    window.BASE_URL = window.BASE_URL || 'http://localhost/NAIG';
+    const origin = window.location.origin;
+    const path = window.location.pathname.split('/NAIG/')[0] + '/NAIG';
+    window.BASE_URL = window.BASE_URL || origin + path;
     window.LOGIN_API = window.LOGIN_API || window.BASE_URL + '/php/database/login.php';
     window.FORGOT_PASSWORD_API = window.FORGOT_PASSWORD_API || window.BASE_URL + '/php/database/forgot_password.php';
 })();
@@ -15,6 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const lockoutTimer = document.getElementById('lockoutTimer');
     const loginBtn = document.getElementById('loginBtn');
     const togglePassword = document.getElementById('togglePassword');
+    const lockoutModal = document.getElementById('lockoutModal');
+    const lockoutModalMessage = document.getElementById('lockoutModalMessage');
 
     // ===== Universal Password Toggle =====
     document.addEventListener('click', (e) => {
@@ -48,15 +52,30 @@ document.addEventListener('DOMContentLoaded', () => {
             const updateTimer = () => {
                 const remaining = Math.max(0, lockoutTime - Math.floor(Date.now() / 1000));
                 if (remaining <= 0) {
-                    lockoutTimer.style.display = 'none';
-                    loginBtn.disabled = false;
+                    if (lockoutTimer) {
+                        lockoutTimer.style.display = 'none';
+                    }
+                    if (lockoutModal) {
+                        lockoutModal.classList.remove('active');
+                    }
+                    if (loginBtn) {
+                        loginBtn.disabled = false;
+                    }
                     localStorage.removeItem('lockoutTime');
                     clearInterval(interval);
                     return;
                 }
-                lockoutTimer.style.display = 'block';
-                lockoutTimer.textContent = `Too many failed attempts. Try again in ${remaining}s`;
-                loginBtn.disabled = true;
+                if (lockoutTimer) {
+                    lockoutTimer.style.display = 'block';
+                    lockoutTimer.textContent = `Too many failed attempts. Try again in ${remaining}s`;
+                }
+                if (lockoutModal && lockoutModalMessage) {
+                    lockoutModal.classList.add('active');
+                    lockoutModalMessage.textContent = `Too many failed attempts. Try again in ${remaining}s.`;
+                }
+                if (loginBtn) {
+                    loginBtn.disabled = true;
+                }
             };
             localStorage.setItem('lockoutTime', lockoutTime);
             updateTimer();

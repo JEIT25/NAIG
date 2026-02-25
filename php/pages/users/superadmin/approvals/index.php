@@ -1,19 +1,19 @@
 <?php
 /**
- * Superadmin - Approval Requests (AMORA-style)
- * Review and approve/reject deletion requests.
+ * Superadmin/Admin - Approval Requests (AMORA-style)
+ * Review and approve/reject requests (admins are limited to registration approvals).
  */
 require_once __DIR__ . '/../../../../includes/auth_check.php';
 require_once __DIR__ . '/../../../../includes/path_helper.php';
 
-if (($user['role'] ?? '') !== 'superadmin') {
+if (!in_array($user['role'] ?? '', ['superadmin', 'admin'])) {
     header('Location: ' . getBaseUrl() . '/php/auth/dashboard.php');
     exit;
 }
 
 $basePath = getBasePath(__FILE__);
-$currentPage = 'approvals';
-$pageTitle = 'Approval Requests';
+$currentPage = 'requests';
+$pageTitle = 'Requests';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -32,8 +32,8 @@ $pageTitle = 'Approval Requests';
         <?php include __DIR__ . '/../../../../includes/layout/sidebar.php'; ?>
         <main class="dashboard-main">
             <div class="page-header">
-                <h1><i class="fa-solid fa-clipboard-check"></i> Approval Requests</h1>
-                <p>Review and approve or reject deletion requests from admins</p>
+                <h1><i class="fa-solid fa-clipboard-check"></i> Requests</h1>
+                <p>View request history and approve or reject pending actions.</p>
             </div>
             <div class="approvals-toolbar">
                 <div class="search-container">

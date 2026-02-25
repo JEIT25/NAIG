@@ -220,6 +220,33 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
         </div>
     </div>
 
+    <!-- Unblock Request Modal -->
+    <div id="unblockModal" class="modal2">
+        <div class="modal2-content" style="max-width: 450px;">
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <div style="width: 60px; height: 60px; background: #ecfdf3; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                    <i class="fa-solid fa-unlock" style="font-size: 1.75rem; color: #16a34a;"></i>
+                </div>
+                <h2 style="font-size: 1.5rem; color: #1f2937; margin-bottom: 0.5rem;">Request to Unblock Consumer</h2>
+                <p style="color: #6b7280; font-size: 0.95rem;">This will ask a superadmin to restore this consumer's access.</p>
+            </div>
+
+            <form id="unblockForm" style="width: 100%; text-align: left;">
+                <input type="hidden" name="target_id" id="unblockTargetId">
+                <div class="form-group">
+                    <label style="font-weight: 600; color: #374151; margin-bottom: 0.5rem; display: block;">Reason for unblocking <span class="required">*</span></label>
+                    <textarea name="reason" id="unblockReason" rows="4" required placeholder="Explain why this account should be unblocked..." style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-family: inherit; resize: vertical;"></textarea>
+                </div>
+                <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                    <button type="button" onclick="document.getElementById('unblockModal').style.display='none'" class="btn-secondary" style="flex: 1; justify-content: center;">Cancel</button>
+                    <button type="submit" class="btn-primary" style="background: #16a34a; flex: 1; justify-content: center; box-shadow: 0 2px 4px rgba(22, 163, 74, 0.2);">
+                        Submit Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Success/Error Modal -->
     <div id="messageModal" class="modal2" style="z-index: 210;">
         <div class="modal2-content" style="max-width: 400px; text-align: center; padding: 2rem;">
@@ -267,7 +294,9 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
                                 <button class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick='editUser(${JSON.stringify(u)})'>
                                     <i class="fa-solid fa-pen-to-square" style="margin-right:0.25rem;"></i> Edit
                                 </button>
-                                ${!isBlocked ? `<button class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; color: var(--error-color); border-color: var(--error-color);" onclick="openBlockModal('${u.id}')"><i class="fa-solid fa-ban" style="margin-right:0.25rem;"></i>Block</button>` : ''}
+                                ${!isBlocked
+                                    ? `<button class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; color: var(--error-color); border-color: var(--error-color);" onclick="openBlockModal('${u.id}')"><i class="fa-solid fa-ban" style="margin-right:0.25rem;"></i>Block</button>`
+                                    : `<button class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; color: #16a34a; border-color: #16a34a;" onclick="openUnblockModal('${u.id}')"><i class="fa-solid fa-unlock" style="margin-right:0.25rem;"></i>Request Unblock</button>`}
                             </td>
                             <td>
                                 <button class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="viewPrivileges('consumer', '${escapeHtml(u.username)}')">
@@ -383,6 +412,25 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
                 });
         };
 
+        document.getElementById('unblockForm').onsubmit = function(e) {
+            e.preventDefault();
+            const fd = new FormData(this);
+            fetch(api + '/admin_request_unblock.php', { method: 'POST', body: fd })
+                .then(r => r.json())
+                .then(d => {
+                    document.getElementById('unblockModal').style.display = 'none';
+                    if (d.success) {
+                        showMessageModal('success', 'Request Submitted', 'The unblock request has been sent for approval.');
+                    } else {
+                        showMessageModal('error', 'Request Failed', d.error || 'An error occurred.');
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('unblockModal').style.display = 'none';
+                    showMessageModal('error', 'Error', 'A network error occurred.');
+                });
+        };
+
         function showMessageModal(type, title, message) {
             const modal = document.getElementById('messageModal');
             const iconContainer = document.getElementById('msgIconContainer');
@@ -416,6 +464,12 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
             document.getElementById('targetId').value = id;
             document.getElementById('blockReason').value = '';
             document.getElementById('blockModal').style.display = 'flex';
+        }
+
+        function openUnblockModal(id) {
+            document.getElementById('unblockTargetId').value = id;
+            document.getElementById('unblockReason').value = '';
+            document.getElementById('unblockModal').style.display = 'flex';
         }
 
         function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }

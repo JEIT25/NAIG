@@ -36,10 +36,18 @@ $where = "WHERE a.status = ?";
 $params = [$status];
 $types = 's';
 
+// Context lets us distinguish between "my own requests" and "review queue"
+$context = isset($_GET['context']) ? trim($_GET['context']) : 'review';
+
 if ($role === 'admin') {
-    $where .= " AND a.requested_by = ?";
-    $params[] = $currentUser['id'];
-    $types .= 's';
+    if ($context === 'my') {
+        // Admin viewing their own requests (admin_approvals.js)
+        $where .= " AND a.requested_by = ?";
+        $params[] = $currentUser['id'];
+        $types .= 's';
+    }
+    // For the shared Requests page (context != 'my'), admins see all approvals;
+    // approval_review.php still restricts what they are allowed to approve/reject.
 }
 
 if ($search !== '') {

@@ -351,16 +351,15 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
                 'Manage restaurant tables',
                 'Manage reservations',
                 'Manage user roles and accounts (including blocking users)',
-                'View request history',
                 'View my profile and change password',
-                'Approve and block requests from admin'
+                'Approve block and unblock requests from admins'
             ],
             'admin': [
                 'Manage system restaurants',
                 'Manage restaurant tables',
                 'Manage reservations',
                 'Manage consumer accounts',
-                'View request history',
+                'Submit block and unblock requests for consumers',
                 'View my profile and change password'
             ],
             'consumer': [

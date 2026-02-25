@@ -15,12 +15,7 @@ if (!isset($_SESSION['user'])) {
 }
 
 $currentUser = $_SESSION['user'];
-if (($currentUser['role'] ?? '') !== 'superadmin') {
-    ob_clean();
-    http_response_code(403);
-    echo json_encode(['success' => false, 'error' => 'Only superadmin can review']);
-    exit;
-}
+$role = $currentUser['role'] ?? '';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     ob_clean();
@@ -55,6 +50,16 @@ try {
     $approval = $res->fetch_assoc();
     $getStmt->close();
 
+    // Permission check: superadmin can review everything; admin can only review registration approvals
+    $actionType = $approval['action_type'] ?? '';
+    if ($role !== 'superadmin' && !($role === 'admin' && $actionType === 'register_consumer')) {
+        $conn->close();
+        ob_clean();
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'You are not allowed to review this request.']);
+        exit;
+    }
+
     $newStatus = $action === 'approve' ? 'approved' : 'rejected';
     $up = $conn->prepare("UPDATE approvals SET status = ?, reviewed_by = ?, reviewed_at = NOW(), review_notes = ? WHERE id = ?");
     $up->bind_param('sssi', $newStatus, $currentUser['id'], $reviewNotes, $approvalId);
@@ -86,6 +91,13 @@ try {
             $del->execute();
             $del->close();
             $msg = 'Menu item deleted.';
+        } elseif ($actionType === 'register_consumer' && $targetType === 'user') {
+            // Approve new consumer registration: activate account
+            $upd = $conn->prepare("UPDATE users SET is_blocked = 0 WHERE id = ?");
+            $upd->bind_param('s', $targetId);
+            $upd->execute();
+            $upd->close();
+            $msg = 'Registration approved and account activated.';
         } else {
             $msg = 'Approval approved.';
         }
