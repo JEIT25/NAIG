@@ -307,37 +307,64 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover {
 }
 
 /* Password Toggle & Input Icons */
-.password-container, .input-with-icon {
+/* Input Icon Groups (Left Icon + Input + Right Toggle) */
+.input-with-icon {
     position: relative;
     width: 100%;
+    display: flex;
+    align-items: center;
 }
 
-.password-container input, .input-with-icon input {
-    padding-right: 3rem !important;
-}
-
-.eye-icon-btn, .password-toggle, .pw-toggle {
+/* Left side icon (Lock, User, Shield, etc.) */
+.input-with-icon .input-icon {
     position: absolute;
-    right: 0.75rem;
-    top: 70%;
+    left: 12px;
+    top: 50%;
     transform: translateY(-50%);
-    background: none !important;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    pointer-events: none;
+    z-index: 5;
+    margin: 0 !important; /* Reset any shifting margins */
+}
+
+/* Right side toggle (Eye icon) */
+.eye-icon-btn, .password-toggle, .pw-toggle, .fp-toggle {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 36px;
+    width: 36px;
+    background: transparent !important;
     border: none !important;
-    padding: 0.4rem !important;
+    padding: 0 !important;
     cursor: pointer;
     color: var(--text-muted);
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: color 0.2s;
-    z-index: 5;
-    height: auto !important;
-    width: auto !important;
-    min-height: 0 !important;
+    transition: all 0.2s ease;
+    z-index: 10;
+    border-radius: 6px;
 }
 
-.eye-icon-btn:hover, .password-toggle:hover, .pw-toggle:hover {
+.eye-icon-btn:hover, .password-toggle:hover, .pw-toggle:hover, .fp-toggle:hover {
     color: var(--primary-color);
+    background: var(--primary-light) !important;
+}
+
+.eye-icon-btn i, .password-toggle i, .pw-toggle i, .fp-toggle i {
+    font-size: 1rem;
+    line-height: 1;
+    display: block;
+}
+
+/* Input padding to accommodate icons */
+.input-with-icon input {
+    padding-left: 2.6rem !important; /* Space for left icon */
+    padding-right: 2.8rem !important; /* Space for right toggle */
+    width: 100%;
 }
 
 .eye-icon-btn i, .password-toggle i, .pw-toggle i {

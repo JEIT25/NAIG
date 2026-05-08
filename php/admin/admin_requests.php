@@ -129,7 +129,7 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
                     <h1 class="page-title" style="margin:0; font-size: 1.875rem; color: #0f172a;">Requests Manager</h1>
                     <p class="page-subtitle" style="margin: 0.5rem 0 0; color: #64748b;">Manage consumer registrations and monitor your block requests.</p>
                 </div>
-                <div id="requestCountBadge" class="status-badge no-dot" style="background: #eff6ff; color: #2563eb; padding: 0.5rem 1.25rem; font-size: 0.875rem; font-weight: 700; border-radius: 9999px; border: 1px solid #dbeafe;">0 Requests</div>
+                <div id="requestCountBadgeHeader" class="status-badge no-dot" style="background: #eff6ff; color: #2563eb; padding: 0.5rem 1.25rem; font-size: 0.875rem; font-weight: 700; border-radius: 9999px; border: 1px solid #dbeafe;">0 Requests</div>
             </div>
 
             <!-- Search and Filters -->
@@ -157,26 +157,32 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
                 </div>
             </div>
 
-            <div id="paginationContainer" style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 1rem 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
-                <div id="paginationInfo" style="font-size: 0.875rem; color: #64748b; font-weight: 500;">Showing 0-0 of 0 requests</div>
-                <div id="paginationControls" style="display: flex; gap: 0.5rem; align-items: center;">
-                </div>
+            <div class="pagination-container" style="margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 1rem 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+                <span id="requestCountBadgeFooter" style="background:#fee2e2; color:#dc2626; padding:0.35rem 0.8rem; border-radius:20px; font-weight:700; font-size:0.85rem;">0 Requests</span>
+                <div id="paginationControls" style="display: flex; align-items: center; justify-content: flex-end;"></div>
             </div>
         </main>
         <?php include __DIR__ . '/../includes/layout/footer.php'; ?>
     </div>
 
+    <script src="../../js/pagination_util.js?v=<?php echo time(); ?>"></script>
     <script>
         const api = '../../php/database';
         let currentPage = 1;
         let currentSearch = '';
         let currentStatus = '';
+        let limit = 10;
+
+        function changeLimit(newLimit) {
+            limit = parseInt(newLimit);
+            loadRequests(1);
+        }
 
         function loadRequests(page = 1) {
             currentPage = page;
             const params = new URLSearchParams({
                 page: currentPage,
-                limit: 10,
+                limit: limit,
                 search: currentSearch,
                 status: currentStatus
             });
@@ -237,7 +243,37 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
                     }
                     html += '</tbody></table>';
                     document.getElementById('requestsTableContainer').innerHTML = html;
-                    renderPagination(data.pagination);
+                    console.log('Admin Requests Data:', data);
+
+                    const total = data.pagination.total_requests || 0;
+                    const countStr = `${total} Request${total !== 1 ? 's' : ''}`;
+
+                    // Update Both Badges
+                    const badges = [
+                        document.getElementById('requestCountBadgeHeader'),
+                        document.getElementById('requestCountBadgeFooter')
+                    ];
+
+                    badges.forEach(badge => {
+                        if (!badge) return;
+                        badge.textContent = countStr;
+                        if (total > 0) {
+                            badge.style.background = '#dbeafe';
+                            badge.style.color = '#1e40af';
+                        } else {
+                            badge.style.background = '#fee2e2';
+                            badge.style.color = '#dc2626';
+                        }
+                    });
+
+                    window.renderPagination(
+                        document.getElementById('paginationControls'),
+                        currentPage,
+                        data.pagination.total_pages || 1,
+                        limit,
+                        function(newPage) { loadRequests(newPage); },
+                        function(newLimit) { limit = newLimit; loadRequests(1); }
+                    );
 
                     // Reset UI state
                     const container = document.getElementById('requestsTableContainer');
@@ -249,30 +285,6 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
                     document.getElementById('requestsTableContainer').style.opacity = '1';
                     document.getElementById('requestsTableContainer').style.pointerEvents = 'auto';
                 });
-        }
-
-        function renderPagination(p) {
-            const info = document.getElementById('paginationInfo');
-            const controls = document.getElementById('paginationControls');
-            const badge = document.getElementById('requestCountBadge');
-
-            badge.textContent = `${p.total_requests} Request${p.total_requests !== 1 ? 's' : ''}`;
-            const start = (p.current_page - 1) * p.limit + 1;
-            const end = Math.min(start + p.limit - 1, p.total_requests);
-            info.textContent = `Showing ${p.total_requests > 0 ? start : 0}-${end} of ${p.total_requests}`;
-
-            let html = '';
-            html += `<button class="btn-reset" style="padding: 0.4rem 0.8rem;" ${p.current_page === 1 ? 'disabled' : `onclick="loadRequests(${p.current_page - 1})"`}><i class="fa-solid fa-chevron-left"></i></button>`;
-            for (let i = 1; i <= p.total_pages; i++) {
-                if (i === 1 || i === p.total_pages || (i >= p.current_page - 1 && i <= p.current_page + 1)) {
-                    const isActive = i === p.current_page;
-                    html += `<button class="${isActive ? 'btn-primary' : 'btn-reset'}" style="padding: 0.4rem 0.8rem; min-width: 2.5rem; ${isActive ? 'background:var(--primary-color); color:white; border-color:var(--primary-color);' : ''}" onclick="loadRequests(${i})">${i}</button>`;
-                } else if (i === p.current_page - 2 || i === p.current_page + 2) {
-                    html += `<span style="padding: 0 0.25rem; color: #94a3b8;">...</span>`;
-                }
-            }
-            html += `<button class="btn-reset" style="padding: 0.4rem 0.8rem;" ${p.current_page === p.total_pages || p.total_pages === 0 ? 'disabled' : `onclick="loadRequests(${p.current_page + 1})"`}><i class="fa-solid fa-chevron-right"></i></button>`;
-            controls.innerHTML = html;
         }
 
         let searchTimeout;

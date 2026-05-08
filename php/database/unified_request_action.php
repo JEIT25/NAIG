@@ -39,8 +39,8 @@ try {
         }
 
         // Update status
-        $up = $conn->prepare("UPDATE user_block_requests SET status = ?, reviewed_by = ?, review_notes = ? WHERE id = ?");
-        $up->bind_param('sssi', $status, $currentUser['id'], $reviewNotes, $request_id);
+        $up = $conn->prepare("UPDATE user_block_requests SET status = ? WHERE id = ?");
+        $up->bind_param('si', $status, $request_id);
         $up->execute();
         $up->close();
 
@@ -81,8 +81,8 @@ try {
         }
 
         // Update status
-        $up = $conn->prepare("UPDATE approvals SET status = ?, reviewed_by = ?, review_notes = ? WHERE id = ?");
-        $up->bind_param('sssi', $status, $currentUser['id'], $reviewNotes, $request_id);
+        $up = $conn->prepare("UPDATE approvals SET status = ? WHERE id = ?");
+        $up->bind_param('si', $status, $request_id);
         $up->execute();
         $up->close();
 

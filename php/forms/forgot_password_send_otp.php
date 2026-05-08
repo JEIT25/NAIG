@@ -45,8 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($recent_otp && $recent_otp['resend_count'] >= 3) {
             echo json_encode(['success' => false, 'message' => 'Too many OTP requests. Please wait 15 minutes before trying again.']);
             exit;
-        }
-        else {
+        } else {
             // Generate 6-digit OTP
             $otp_code = sprintf('%06d', mt_rand(0, 999999));
             $expires_at = date('Y-m-d H:i:s', strtotime('+15 minutes'));
@@ -72,25 +71,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $_SESSION['otp_expires_at'] = $expires_at;
                     ob_clean(); // Clean any previous output
                     echo json_encode(['success' => true, 'message' => 'Verification code sent to your email!']);
-                }
-                else {
+                } else {
                     ob_clean();
                     echo json_encode(['success' => false, 'message' => 'Failed to send email. Please try again.']);
                 }
-            }
-            else {
+            } else {
                 ob_clean();
                 echo json_encode(['success' => false, 'message' => 'Failed to generate verification code. Please try again.']);
             }
             $stmt->close();
         }
-    }
-    else {
+    } else {
         ob_clean();
         echo json_encode(['success' => false, 'message' => 'User not found.']);
     }
-}
-else {
+} else {
     ob_clean();
     echo json_encode(['success' => false, 'message' => 'Invalid request method. Received: ' . $_SERVER['REQUEST_METHOD'] . ' from ' . $_SERVER['REMOTE_ADDR']]);
 }

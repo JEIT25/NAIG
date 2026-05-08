@@ -1,7 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../includes/auth_check.php';
-requireRole('consumer');
+requireLogin();
 
 $basePath = getBasePath(__FILE__);
 
@@ -140,6 +140,9 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
                             <?php echo ucfirst($userRole); ?>
                         </span>
                         <span class="badge-verified"><i class="fa-solid fa-circle-check"></i> Active</span>
+                        <a href="javascript:void(0)" onclick="viewMyPrivileges()" style="font-size: 0.8rem; font-weight: 600; color: var(--primary-color); text-decoration: none; margin-left: 0.25rem; display: flex; align-items: center; gap: 0.35rem;">
+                            <i class="fa-solid fa-shield-halved"></i> View Privileges
+                        </a>
                     </div>
                 </div>
             </div>
@@ -310,6 +313,16 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
         <?php include __DIR__ . '/../includes/layout/footer.php'; ?>
     </div>
 
+    <!-- Privileges Modal -->
+    <div id="privModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1100; align-items:center; justify-content:center;">
+        <div style="background:white; padding:2rem; border-radius:12px; width:95%; max-width:450px; text-align:left; box-shadow:0 10px 25px rgba(0,0,0,0.1);">
+            <h2 style="margin:0 0 0.5rem; font-size:1.5rem; color:#1f2937;">Account Privileges</h2>
+            <p id="privUserName" style="font-weight: 600; margin-bottom: 1.5rem; color:#64748b; font-size:0.9rem;"></p>
+            <div id="privContent" style="width: 100%;"></div>
+            <button onclick="document.getElementById('privModal').style.display='none'" class="submitBtn" style="margin-top: 1.5rem; width:100%; justify-content:center; padding:0.75rem;">Close</button>
+        </div>
+    </div>
+
     <!-- Message Modal -->
     <div id="messageModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1100; align-items:center; justify-content:center;">
         <div style="background:white; padding:1.5rem; border-radius:12px; width:90%; max-width:350px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.1);">
@@ -325,6 +338,66 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
     <script>
         // Sidebar toggle
         (function(){ var o=document.getElementById('sidebarOverlay'),t=document.getElementById('sidebarToggle'); if(t&&o){ t.addEventListener('click',function(){ document.body.classList.toggle('sidebar-open'); o.classList.toggle('is-open',document.body.classList.contains('sidebar-open')); }); o.addEventListener('click',function(){ document.body.classList.remove('sidebar-open'); o.classList.remove('is-open'); }); } })();
+
+        const privilegesConfig = {
+            'consumer': [
+                { desc: 'Access My Profile',                          has: true  },
+                { desc: 'Change Password',                             has: true  },
+                { desc: 'Browse Restaurants',                          has: true  },
+                { desc: 'Book Table Reservations',                     has: true  },
+                { desc: 'View Personal Reservation History',           has: true  },
+                { desc: 'Manage Consumer Accounts',                    has: false },
+                { desc: 'Approve / Reject Registration Requests',      has: false },
+                { desc: 'Block / Unblock Users',                       has: false },
+                { desc: 'Manage Restaurants & Tables',                  has: false },
+                { desc: 'Full System Administration',                  has: false },
+            ],
+            'admin': [
+                { desc: 'Access My Profile',                          has: true  },
+                { desc: 'Change Password',                             has: true  },
+                { desc: 'Manage Restaurants & Tables',                  has: true  },
+                { desc: 'View All System Reservations',                has: true  },
+                { desc: 'Manage Consumer Accounts',                    has: true  },
+                { desc: 'Submit Block / Unblock Requests',             has: true  },
+                { desc: 'Approve Administrative Requests',             has: false },
+                { desc: 'Modify User Roles',                           has: false },
+                { desc: 'View System-wide Activity Logs',              has: false },
+                { desc: 'Full System Administration',                  has: false },
+            ],
+            'superadmin': [
+                { desc: 'Access My Profile',                          has: true  },
+                { desc: 'Change Password',                             has: true  },
+                { desc: 'Approve / Reject Administrative Requests',    has: true  },
+                { desc: 'Full System Administration',                  has: true  },
+                { desc: 'Manage All User Roles',                       has: true  },
+                { desc: 'View System-wide Activity Logs',              has: true  },
+                { desc: 'Bypass Administrative Validation',            has: true  },
+                { desc: 'Permanent Account Deletion',                  has: true  },
+            ]
+        };
+
+        function viewMyPrivileges() {
+            const role = '<?php echo $userRole; ?>';
+            const name = '<?php echo addslashes($user['firstName'] . ' ' . $user['lastName']); ?>';
+            document.getElementById('privUserName').textContent = name + ' (' + role.toUpperCase() + ')';
+            const privs = privilegesConfig[role] || privilegesConfig['consumer'];
+
+            const listHtml = privs.map(p => `
+                <div style="display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:8px;
+                     background:${p.has ? '#f0fdf4' : '#f8fafc'};
+                     border:1px solid ${p.has ? '#bbf7d0' : '#e2e8f0'}; margin-bottom:4px; text-align:left;">
+                    <i class="fa-solid ${p.has ? 'fa-circle-check' : 'fa-circle-xmark'}"
+                       style="color:${p.has ? '#16a34a' : '#94a3b8'}; font-size:17px; flex-shrink:0;"></i>
+                    <span style="font-size:0.875rem; font-weight:500;
+                          color:${p.has ? '#166534' : '#64748b'};
+                          text-decoration:${p.has ? 'none' : 'line-through'};">${p.desc}</span>
+                </div>`
+            ).join('');
+
+            const contentDiv = document.getElementById('privContent');
+            contentDiv.innerHTML = `<div style="display:inline-block; text-align:left; width:100%;">${listHtml}</div>`;
+            document.getElementById('privModal').style.display = 'flex';
+        }
 
         // Tab switching
         document.querySelectorAll('.info-tab').forEach(tab => {

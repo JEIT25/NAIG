@@ -23,7 +23,8 @@ $zipCode = trim($_POST['zipCode'] ?? '');
 $country = trim($_POST['country'] ?? '');
 $username = trim($_POST['username'] ?? '');
 $email = trim($_POST['email'] ?? '');
-$role = trim($_POST['role'] ?? 'consumer');
+$role = trim($_POST['role'] ?? '');
+if (!$role) $role = 'consumer';
 $password = trim($_POST['password'] ?? '');
 
 // Security Questions (Only for consumers)
@@ -60,7 +61,7 @@ $stmt->close();
 
 if ($id) {
     // UPDATE USER
-    $types = "sssssssssssssssi"; // Base types
+    $types = "ssssssisssssssss"; // Correct order: age is 7th (i), role is 16th (s)
     $params = [
         $firstName, $lastName, $middleInitial, $extension, $sex, $birthdate, $age,
         $purok, $barangay, $city, $province, $zipCode, $country,

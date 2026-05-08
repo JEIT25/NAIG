@@ -63,15 +63,18 @@ $icon = $roleIcon[$userRole] ?? 'fa-user';
     </div>
     <nav class="sidebar-menu">
         <?php if ($userRole === 'superadmin'): ?>
+            <p class="muted small" style="padding: 0 1rem; margin-bottom: 0.5rem; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em;">Overview</p>
+            <a href="<?php echo $baseUrl; ?>/php/superadmin/index.php" class="<?php echo isActive('superadmin_dashboard', $currentPage); ?>"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+
             <p class="muted small" style="padding: 0 1rem; margin: 1rem 0 0.5rem; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em;">Management</p>
-            <a href="<?php echo $baseUrl; ?>/php/superadmin/requests.php" class="<?php echo isActive('superadmin_requests', $currentPage); ?>"><i class="fa-solid fa-clipboard-check"></i> Manage Requests</a>
             <a href="<?php echo $baseUrl; ?>/php/admin/restaurants.php" class="<?php echo isActive('admin_restaurants', $currentPage); ?>"><i class="fa-solid fa-store"></i> Restaurants</a>
             <a href="<?php echo $baseUrl; ?>/php/admin/tables.php" class="<?php echo isActive('admin_tables', $currentPage); ?>"><i class="fa-solid fa-chair"></i> Tables</a>
             <a href="<?php echo $baseUrl; ?>/php/admin/reservations.php" class="<?php echo isActive('admin_reservations', $currentPage); ?>"><i class="fa-solid fa-calendar-check"></i> Reservations</a>
 
             <p class="muted small" style="padding: 0 1rem; margin: 1rem 0 0.5rem; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em;">Users & Roles</p>
             <a href="<?php echo $baseUrl; ?>/php/superadmin/users.php" class="<?php echo isActive('superadmin_users', $currentPage); ?>"><i class="fa-solid fa-users-gear"></i> Manage Accounts</a>
-            <a href="<?php echo $baseUrl; ?>/php/superadmin/logs.php" class="<?php echo isActive('superadmin_logs', $currentPage); ?>"><i class="fa-solid fa-list-check"></i> Login Logs</a>
+            <a href="<?php echo $baseUrl; ?>/php/superadmin/requests.php" class="<?php echo isActive('superadmin_requests', $currentPage); ?>"><i class="fa-solid fa-clipboard-check"></i> Manage Requests</a>
+            <a href="<?php echo $baseUrl; ?>/php/superadmin/logs.php" class="<?php echo isActive('superadmin_logs', $currentPage); ?>"><i class="fa-solid fa-list-check"></i>Logs</a>
 
         <?php
 elseif ($userRole === 'admin'): ?>
@@ -84,8 +87,8 @@ elseif ($userRole === 'admin'): ?>
             <a href="<?php echo $baseUrl; ?>/php/admin/reservations.php" class="<?php echo isActive('admin_reservations', $currentPage); ?>"><i class="fa-solid fa-calendar-check"></i> Reservations</a>
 
             <p class="muted small" style="padding: 0 1rem; margin: 1rem 0 0.5rem; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em;">People</p>
-            <a href="<?php echo $baseUrl; ?>/php/admin/consumers.php" class="<?php echo isActive('admin_consumers', $currentPage); ?>"><i class="fa-solid fa-users"></i> Consumers</a>
-            <a href="<?php echo $baseUrl; ?>/php/admin/admin_requests.php" class="<?php echo isActive('admin_requests', $currentPage); ?>"><i class="fa-solid fa-clipboard-check"></i> Requests</a>
+            <a href="<?php echo $baseUrl; ?>/php/admin/consumers.php" class="<?php echo isActive('admin_consumers', $currentPage); ?>"><i class="fa-solid fa-users"></i> Manage Consumers</a>
+            <a href="<?php echo $baseUrl; ?>/php/admin/admin_requests.php" class="<?php echo isActive('admin_requests', $currentPage); ?>"><i class="fa-solid fa-clipboard-check"></i> Manage Requests</a>
 
         <?php
 else: ?>

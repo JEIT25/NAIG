@@ -15,44 +15,69 @@ $offset = ($page - 1) * $limit;
 $search = trim($_GET['search'] ?? '');
 $status = trim($_GET['status'] ?? '');
 
-// Base conditions for Admin
-// Admins can see block/unblock requests they created AND registration approvals (since they manage consumers)
-$blockWhere = "r.requester_id = ?";
-$appWhere = "a.action_type = 'register_consumer'";
-
-$blockParams = [$admin_id];
-$blockTypes = 's';
-$appParams = [];
-$appTypes = '';
-
-if ($status !== '') {
-    $blockWhere .= " AND r.status = ?";
-    $blockParams[] = $status;
-    $blockTypes .= 's';
-
-    $appWhere .= " AND a.status = ?";
-    $appParams[] = $status;
-    $appTypes .= 's';
-}
-
-if ($search !== '') {
-    $searchToken = "%$search%";
-    // Block search
-    $blockWhere .= " AND (u2.firstName LIKE ? OR u2.lastName LIKE ? OR u2.username LIKE ? OR u2.email LIKE ? OR r.reason LIKE ?)";
-    array_push($blockParams, $searchToken, $searchToken, $searchToken, $searchToken, $searchToken);
-    $blockTypes .= 'sssss';
-
-    // Approval search
-    $appWhere .= " AND (u.firstName LIKE ? OR u.lastName LIKE ? OR u.username LIKE ? OR u.email LIKE ? OR a.reason LIKE ?)";
-    array_push($appParams, $searchToken, $searchToken, $searchToken, $searchToken, $searchToken);
-    $appTypes .= 'sssss';
-}
-
 try {
-    // We will fetch ALL matching records from BOTH tables, merge them in PHP, sort, and paginate.
-    // Alternatively, we could UNION them in SQL, but the union schema is tricky.
-    // Given typical admin loads, UNION in SQL is better for pagination.
+    // 1. Role-based visibility logic
+    if ($_SESSION['user']['role'] === 'superadmin') {
+        $blockWhereBase = "1=1";
+        $blockParamsBase = [];
+        $blockTypesBase = "";
+    } else {
+        $blockWhereBase = "r.requester_id = ?";
+        $blockParamsBase = [$admin_id];
+        $blockTypesBase = 's';
+    }
 
+    // 2. Build dynamic filters
+    $blockWhere = $blockWhereBase;
+    $blockParams = $blockParamsBase;
+    $blockTypes = $blockTypesBase;
+
+    $appWhere = "a.action_type = 'register_consumer'";
+    $appParams = [];
+    $appTypes = '';
+
+    if ($status !== '') {
+        $blockWhere .= " AND r.status = ?";
+        $blockParams[] = $status;
+        $blockTypes .= 's';
+
+        $appWhere .= " AND a.status = ?";
+        $appParams[] = $status;
+        $appTypes .= 's';
+    }
+
+    if ($search !== '') {
+        $searchToken = "%$search%";
+        $blockWhere .= " AND (u2.firstName LIKE ? OR u2.lastName LIKE ? OR u2.username LIKE ? OR u2.email LIKE ? OR r.reason LIKE ?)";
+        array_push($blockParams, $searchToken, $searchToken, $searchToken, $searchToken, $searchToken);
+        $blockTypes .= 'sssss';
+
+        $appWhere .= " AND (u.firstName LIKE ? OR u.lastName LIKE ? OR u.username LIKE ? OR u.email LIKE ? OR a.reason LIKE ?)";
+        array_push($appParams, $searchToken, $searchToken, $searchToken, $searchToken, $searchToken);
+        $appTypes .= 'sssss';
+    }
+
+    // 3. Get total count (Using the exact same UNION logic as the data fetch)
+    $countSql = "
+        SELECT COUNT(*) as total FROM (
+            SELECT r.id FROM user_block_requests r JOIN users u2 ON r.target_id = u2.id WHERE $blockWhere
+            UNION ALL
+            SELECT a.id FROM approvals a JOIN users u ON a.target_id = u.id AND a.target_type = 'user' WHERE $appWhere
+        ) as combined_count
+    ";
+    
+    $cStmt = $conn->prepare($countSql);
+    $countParams = array_merge($blockParams, $appParams);
+    $countTypes = $blockTypes . $appTypes;
+    
+    if (strlen($countTypes) > 0) {
+        $cStmt->bind_param($countTypes, ...$countParams);
+    }
+    $cStmt->execute();
+    $total = (int)($cStmt->get_result()->fetch_assoc()['total'] ?? 0);
+    $cStmt->close();
+
+    // 4. Fetch Paginated Data
     $sql = "
         SELECT
             r.id as request_id,
@@ -92,70 +117,43 @@ try {
         LIMIT ? OFFSET ?
     ";
 
-    // Combine parameters carefully for the UNION query
-    $allParams = array_merge($blockParams, $appParams, [$limit, $offset]);
-    $allTypes = $blockTypes . $appTypes . 'ii';
+    $dataParams = array_merge($blockParams, $appParams, [$limit, $offset]);
+    $dataTypes = $blockTypes . $appTypes . 'ii';
 
     $stmt = $conn->prepare($sql);
+    $requests = [];
     if ($stmt) {
-        $stmt->bind_param($allTypes, ...$allParams);
+        $stmt->bind_param($dataTypes, ...$dataParams);
         $stmt->execute();
         $result = $stmt->get_result();
 
-        $requests = [];
         while ($row = $result->fetch_assoc()) {
-            // Normalize types
             if ($row['type'] === 'register_consumer') {
                 $row['request_type'] = 'registration';
-            }
-            else {
+            } else {
                 $row['request_type'] = $row['type'];
             }
             $requests[] = $row;
         }
         $stmt->close();
-
-        // Get total count
-        $countSql = "
-            SELECT SUM(cnt) as total FROM (
-                SELECT COUNT(*) as cnt FROM user_block_requests r JOIN users u2 ON r.target_id = u2.id WHERE $blockWhere
-                UNION ALL
-                SELECT COUNT(*) as cnt FROM approvals a JOIN users u ON a.target_id = u.id AND a.target_type = 'user' WHERE $appWhere
-            ) as totals
-        ";
-        $countStmt = $conn->prepare($countSql);
-        if ($countStmt) {
-            // Total count needs the same params minus the limit/offset
-            $countParams = array_merge($blockParams, $appParams);
-            $countTypes = $blockTypes . $appTypes;
-            if (strlen($countTypes) > 0) {
-                $countStmt->bind_param($countTypes, ...$countParams);
-            }
-            $countStmt->execute();
-            $totalResult = $countStmt->get_result()->fetch_assoc();
-            $total = (int)$totalResult['total'];
-            $countStmt->close();
-        }
-        else {
-            $total = 0;
-        }
-
-        echo json_encode([
-            'success' => true,
-            'requests' => $requests,
-            'pagination' => [
-                'current_page' => $page,
-                'limit' => $limit,
-                'total_requests' => $total,
-                'total_pages' => ceil($total / $limit)
-            ]
-        ]);
-    }
-    else {
+    } else {
         throw new Exception($conn->error);
     }
-}
-catch (Exception $e) {
+
+    echo json_encode([
+        'success' => true,
+        'requests' => $requests,
+        'debug_role' => $_SESSION['user']['role'],
+        'debug_id' => $admin_id,
+        'pagination' => [
+            'current_page' => $page,
+            'limit' => $limit,
+            'total_requests' => $total,
+            'total_pages' => ceil($total / max(1, $limit))
+        ]
+    ]);
+
+} catch (Exception $e) {
     echo json_encode(['success' => false, 'error' => 'Database error: ' . $e->getMessage()]);
 }
 

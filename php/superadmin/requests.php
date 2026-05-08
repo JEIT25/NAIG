@@ -51,15 +51,6 @@ $pageTitle = 'Manage Requests';
         }
         .data-table tr:hover { background-color: #f1f5f9; transition: background 0.2s; }
 
-        /* Column Widths (Approximations with table-layout: auto) */
-        .col-requester { width: 15%; min-width: 150px; }
-        .col-target { width: 15%; min-width: 150px; }
-        .col-type { width: 10%; min-width: 100px; }
-        .col-reason { width: auto; min-width: 200px; }
-        .col-date { width: 12%; min-width: 120px; }
-        .col-status { width: 10%; min-width: 100px; }
-        .col-action { width: 12%; min-width: 140px; }
-
         .search-filters {
             display: flex;
             gap: 1.25rem;
@@ -72,7 +63,7 @@ $pageTitle = 'Manage Requests';
             border: 1px solid var(--border-color);
             box-shadow: 0 2px 10px rgba(0,0,0,0.04);
         }
-        .search-filters .form-group { flex: 1; min-width: 250px; margin-bottom: 0; }
+        .search-filters .form-group { flex: 1; min-width: 200px; margin-bottom: 0; }
         .search-filters .form-group label { display: block; margin-bottom: 0.6rem; font-weight: 600; font-size: 0.85rem; color: #64748b; }
         .search-filters input, .search-filters select {
             width: 100%;
@@ -85,7 +76,7 @@ $pageTitle = 'Manage Requests';
         .search-filters input:focus, .search-filters select:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+            box-shadow: 0 0 0 3px rgba(26, 86, 83, 0.1);
             background-color: #fff;
         }
         .btn-reset {
@@ -115,6 +106,18 @@ $pageTitle = 'Manage Requests';
         .btn-reject { background: #fee2e2; color: #b91c1c; }
         .btn-reject:hover { background: #fecaca; }
 
+        /* Premium Pagination Container Styles (Matched to Image) */
+        .pagination-container {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8fafc;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
         @media (max-width: 1024px) {
             .data-table-container { overflow-x: auto; }
             .data-table { min-width: 900px; table-layout: auto; }
@@ -124,28 +127,35 @@ $pageTitle = 'Manage Requests';
 <body>
     <?php include __DIR__ . '/../includes/layout/navbar.php'; ?>
     <div class="dashboard-container">
-        <?php $currentPage = 'superadmin_requests';
-include __DIR__ . '/../includes/layout/sidebar.php'; ?>
+        <?php $currentPage = 'superadmin_requests'; include __DIR__ . '/../includes/layout/sidebar.php'; ?>
         <main class="dashboard-main">
             <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 1.5rem;">
                 <div>
                     <h1 class="page-title" style="margin:0; font-size: 1.875rem; color: #0f172a;">Manage Requests</h1>
                     <p class="page-subtitle" style="margin: 0.5rem 0 0; color: #64748b;">System-wide activity overview and authorizations</p>
                 </div>
-                <div id="requestCountBadge" class="status-badge no-dot" style="background: #eff6ff; color: #2563eb; padding: 0.5rem 1.25rem; font-size: 0.875rem; font-weight: 700; border-radius: 9999px; border: 1px solid #dbeafe;">0 Requests</div>
+                <div id="requestCountBadgeHeader" class="status-badge no-dot" style="background: #eff6ff; color: #2563eb; padding: 0.5rem 1.25rem; font-size: 0.875rem; font-weight: 700; border-radius: 9999px; border: 1px solid #dbeafe;">0 Requests</div>
             </div>
 
             <!-- Search and Filters -->
             <div class="search-filters">
-                <div class="form-group">
-                    <label><i class="fa-solid fa-magnifying-glass"></i> Search Filter</label>
+                <div class="form-group" style="flex: 2;">
+                    <label><i class="fa-solid fa-magnifying-glass"></i> Keyword Search</label>
                     <input type="text" id="searchInput" placeholder="Search by name, username, or reason..." onkeyup="handleSearch(event)">
                 </div>
-                <div class="form-group" style="max-width: 200px;">
+                <div class="form-group">
+                    <label><i class="fa-solid fa-calendar-day"></i> From</label>
+                    <input type="date" id="startDate" onchange="applyFilters()">
+                </div>
+                <div class="form-group">
+                    <label><i class="fa-solid fa-calendar-day"></i> To</label>
+                    <input type="date" id="endDate" onchange="applyFilters()">
+                </div>
+                <div class="form-group" style="max-width: 180px;">
                     <label><i class="fa-solid fa-filter"></i> Status</label>
                     <select id="filterStatus" onchange="applyFilters()">
                         <option value="">All History</option>
-                        <option value="pending" selected>Pending Only</option>
+                        <option value="pending">Pending Only</option>
                         <option value="approved">Approved</option>
                         <option value="rejected">Rejected</option>
                     </select>
@@ -160,28 +170,34 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
                 </div>
             </div>
 
-            <div id="paginationContainer" style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 1rem 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
-                <div id="paginationInfo" style="font-size: 0.875rem; color: #64748b; font-weight: 500;">Showing 0-0 of 0 requests</div>
-                <div id="paginationControls" style="display: flex; gap: 0.5rem; align-items: center;">
-                </div>
+            <!-- Matched Pagination UI -->
+            <div class="pagination-container">
+                <span id="requestCountBadge" style="background:#dbeafe; color:#1e40af; padding:0.35rem 0.8rem; border-radius:20px; font-weight:700; font-size:0.85rem;">0 Requests</span>
+                <div id="paginationControls" style="display: flex; align-items: center; justify-content: flex-end;"></div>
             </div>
         </main>
         <?php include __DIR__ . '/../includes/layout/footer.php'; ?>
     </div>
 
+    <script src="../../js/pagination_util.js"></script>
     <script>
         const api = '../../php/database';
         let currentPage = 1;
         let currentSearch = '';
-        let currentStatus = 'pending';
+        let currentStatus = '';
+        let currentStartDate = '';
+        let currentEndDate = '';
+        let limit = 10;
 
         function loadRequests(page = 1) {
             currentPage = page;
             const params = new URLSearchParams({
                 page: currentPage,
-                limit: 10,
+                limit: limit,
                 search: currentSearch,
-                status: currentStatus
+                status: currentStatus,
+                startDate: currentStartDate,
+                endDate: currentEndDate
             });
 
             fetch(api + '/superadmin_unified_requests.php?' + params.toString())
@@ -193,13 +209,13 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
                     }
 
                     let html = '<table class="data-table"><thead><tr>' +
-                        '<th class="col-requester">Requester</th>' +
-                        '<th class="col-target">Target User</th>' +
-                        '<th class="col-type">Type</th>' +
-                        '<th class="col-reason">Reason</th>' +
-                        '<th class="col-date">Date</th>' +
-                        '<th class="col-status">Status</th>' +
-                        '<th class="col-action">Action</th>' +
+                        '<th>Requester</th>' +
+                        '<th>Target User</th>' +
+                        '<th>Type</th>' +
+                        '<th>Reason</th>' +
+                        '<th>Date</th>' +
+                        '<th>Status</th>' +
+                        '<th>Action</th>' +
                         '</tr></thead><tbody>';
 
                     if (data.requests.length === 0) {
@@ -216,18 +232,12 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
                                               'background: #fee2e2; color: #991b1b;';
 
                             html += `<tr>
-                                <td>
-                                    <div style="font-weight:700; color: #334155;">${escapeHtml(r.requester_first + ' ' + r.requester_last)}</div>
-                                </td>
+                                <td><div style="font-weight:700; color: #334155;">${escapeHtml(r.requester_first + ' ' + r.requester_last)}</div></td>
                                 <td>
                                     <div style="font-weight:700; color: #334155;">${escapeHtml(r.target_first + ' ' + r.target_last)}</div>
                                     <div class="muted small" style="color: #64748b;">@${escapeHtml(r.target_username)}</div>
                                 </td>
-                                <td>
-                                    <span class="status-badge no-dot" style="font-size: 0.7rem; font-weight: 800; border-radius: 6px; ${typeStyle}">
-                                        ${typeLabel}
-                                    </span>
-                                </td>
+                                <td><span class="status-badge no-dot" style="font-size: 0.7rem; font-weight: 800; border-radius: 6px; ${typeStyle}">${typeLabel}</span></td>
                                 <td style="font-size: 0.875rem; line-height: 1.4; color: #475569;">${escapeHtml(r.reason)}</td>
                                 <td style="font-size: 0.875rem; color: #475569; font-weight: 500;">${new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
                                 <td><span class="status-badge no-dot ${statusClass}" style="font-weight:700;">${r.status.toUpperCase()}</span></td>
@@ -244,99 +254,58 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
                     }
                     html += '</tbody></table>';
                     document.getElementById('requestsTableContainer').innerHTML = html;
-                    renderPagination(data.pagination);
-
-                    // Reset UI state
-                    const container = document.getElementById('requestsTableContainer');
-                    if (container) {
-                        container.style.opacity = '1';
-                        container.style.pointerEvents = 'auto';
-                    }
+                    updatePagination(data.pagination);
                 })
                 .catch(err => {
                     console.error('Fetch error:', err);
-                    const container = document.getElementById('requestsTableContainer');
-                    if (container) {
-                        container.style.opacity = '1';
-                        container.style.pointerEvents = 'auto';
-                    }
                 });
         }
 
-        function renderPagination(p) {
-            const info = document.getElementById('paginationInfo');
+        function updatePagination(p) {
             const controls = document.getElementById('paginationControls');
-            const badge = document.getElementById('requestCountBadge');
-
-            badge.textContent = `${p.total_requests} Request${p.total_requests !== 1 ? 's' : ''}`;
-            const start = (p.current_page - 1) * p.limit + 1;
-            const end = Math.min(start + p.limit - 1, p.total_requests);
-            info.textContent = `Showing ${p.total_requests > 0 ? start : 0}-${end} of ${p.total_requests}`;
-
-            let html = '';
-            html += `<button class="btn-reset" style="padding: 0.4rem 0.8rem;" ${p.current_page === 1 ? 'disabled' : `onclick="loadRequests(${p.current_page - 1})"`}><i class="fa-solid fa-chevron-left"></i></button>`;
-            for (let i = 1; i <= p.total_pages; i++) {
-                if (i === 1 || i === p.total_pages || (i >= p.current_page - 1 && i <= p.current_page + 1)) {
-                    const isActive = i === p.current_page;
-                    html += `<button class="${isActive ? 'btn-primary' : 'btn-reset'}" style="padding: 0.4rem 0.8rem; min-width: 2.5rem; ${isActive ? 'background:var(--primary-color); color:white; border-color:var(--primary-color);' : ''}" onclick="loadRequests(${i})">${i}</button>`;
-                } else if (i === p.current_page - 2 || i === p.current_page + 2) {
-                    html += `<span style="padding: 0 0.25rem; color: #94a3b8;">...</span>`;
-                }
-            }
-            html += `<button class="btn-reset" style="padding: 0.4rem 0.8rem;" ${p.current_page === p.total_pages || p.total_pages === 0 ? 'disabled' : `onclick="loadRequests(${p.current_page + 1})"`}><i class="fa-solid fa-chevron-right"></i></button>`;
-            controls.innerHTML = html;
+            const badgeHeader = document.getElementById('requestCountBadgeHeader');
+            const badgeFooter = document.getElementById('requestCountBadge');
+            
+            const countText = `${p.total_requests} Request${p.total_requests !== 1 ? 's' : ''}`;
+            if (badgeHeader) badgeHeader.textContent = countText;
+            if (badgeFooter) badgeFooter.textContent = countText;
+            
+            window.renderPagination(controls, currentPage, p.total_pages || 1, limit, n => loadRequests(n), l => { limit = l; loadRequests(1); });
         }
 
         let searchTimeout;
         function handleSearch(e) {
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                currentSearch = e.target.value;
-                loadRequests(1);
-            }, 300);
+            searchTimeout = setTimeout(() => { currentSearch = e.target.value; loadRequests(1); }, 300);
         }
 
         function applyFilters() {
             currentStatus = document.getElementById('filterStatus').value;
+            currentStartDate = document.getElementById('startDate').value;
+            currentEndDate = document.getElementById('endDate').value;
             loadRequests(1);
         }
 
         function resetFilters() {
             document.getElementById('searchInput').value = '';
-            document.getElementById('filterStatus').value = 'pending';
-            currentSearch = '';
-            currentStatus = 'pending';
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+            currentSearch = ''; currentStatus = ''; currentStartDate = ''; currentEndDate = '';
             loadRequests(1);
         }
 
         function handleRequest(id, table, action) {
             const verb = action === 'approve' ? 'APPROVE' : 'REJECT';
             if (!confirm(`Are you sure you want to ${verb} this request? This action cannot be undone.`)) return;
-
-            const fd = new FormData();
-            fd.append('request_id', id);
-            fd.append('source_table', table);
-            fd.append('action', action);
-
-            // Visual feedback
+            const fd = new FormData(); fd.append('request_id', id); fd.append('source_table', table); fd.append('action', action);
             document.getElementById('requestsTableContainer').style.opacity = '0.5';
-            document.getElementById('requestsTableContainer').style.pointerEvents = 'none';
-
             fetch(api + '/unified_request_action.php', { method: 'POST', body: fd })
-                .then(r => r.json())
-                .then(d => {
+                .then(r => r.json()).then(d => {
                     if (d.success) loadRequests(currentPage);
-                    else {
-                        alert(d.error);
-                        document.getElementById('requestsTableContainer').style.opacity = '1';
-                        document.getElementById('requestsTableContainer').style.pointerEvents = 'auto';
-                    }
+                    else { alert(d.error); document.getElementById('requestsTableContainer').style.opacity = '1'; }
                 })
-                .catch(err => {
-                    alert('Network error. Please try again.');
-                    document.getElementById('requestsTableContainer').style.opacity = '1';
-                    document.getElementById('requestsTableContainer').style.pointerEvents = 'auto';
-                });
+                .catch(err => { alert('Network error.'); document.getElementById('requestsTableContainer').style.opacity = '1'; });
         }
 
         function escapeHtml(s) { if(!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
@@ -344,4 +313,3 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
     </script>
 </body>
 </html>
-

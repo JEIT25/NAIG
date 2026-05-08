@@ -12,6 +12,8 @@ $limit = min(50, max(1, (int)($_GET['limit'] ?? 10)));
 $offset = ($page - 1) * $limit;
 $search = trim($_GET['search'] ?? '');
 $status = trim($_GET['status'] ?? '');
+$startDate = trim($_GET['startDate'] ?? '');
+$endDate = trim($_GET['endDate'] ?? '');
 
 $blockWhere = "1=1";
 $appWhere = "a.target_type = 'user'";
@@ -40,6 +42,26 @@ if ($search !== '') {
     $appWhere .= " AND (u1.firstName LIKE ? OR u1.lastName LIKE ? OR u.firstName LIKE ? OR u.lastName LIKE ? OR u.username LIKE ? OR a.reason LIKE ?)";
     array_push($appParams, $searchToken, $searchToken, $searchToken, $searchToken, $searchToken, $searchToken);
     $appTypes .= 'ssssss';
+}
+
+// Date Range Filtering
+if ($startDate !== '') {
+    $blockWhere .= " AND DATE(r.created_at) >= ?";
+    $blockParams[] = $startDate;
+    $blockTypes .= 's';
+
+    $appWhere .= " AND DATE(a.created_at) >= ?";
+    $appParams[] = $startDate;
+    $appTypes .= 's';
+}
+if ($endDate !== '') {
+    $blockWhere .= " AND DATE(r.created_at) <= ?";
+    $blockParams[] = $endDate;
+    $blockTypes .= 's';
+
+    $appWhere .= " AND DATE(a.created_at) <= ?";
+    $appParams[] = $endDate;
+    $appTypes .= 's';
 }
 
 try {
@@ -93,7 +115,9 @@ try {
 
     $stmt = $conn->prepare($sql);
     if ($stmt) {
-        $stmt->bind_param($allTypes, ...$allParams);
+        if (strlen($allTypes) > 0) {
+            $stmt->bind_param($allTypes, ...$allParams);
+        }
         $stmt->execute();
         $result = $stmt->get_result();
 

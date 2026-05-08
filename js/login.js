@@ -89,6 +89,13 @@ document.addEventListener('DOMContentLoaded', () => {
         showLockout(parseInt(localStorage.getItem('failedAttempts') || '0'), parseInt(storedLockout));
     }
 
+    // Show forgot password link only after at least 1 failed attempt
+    const storedFailedAttempts = parseInt(localStorage.getItem('failedAttempts') || '0');
+    const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+    if (forgotPasswordLink && storedFailedAttempts >= 1) {
+        forgotPasswordLink.style.display = 'block';
+    }
+
     // ===== Login Form Submit =====
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -130,8 +137,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (passwordError) passwordError.textContent = data.requirePw;
                 else serverError.textContent = data.requirePw;
             }
-            if (data.failed_attempts && data.lockout_time) {
-                showLockout(data.failed_attempts, data.lockout_time);
+            if (data.failed_attempts) {
+                localStorage.setItem('failedAttempts', data.failed_attempts);
+                if (parseInt(data.failed_attempts) >= 1 && forgotPasswordLink) {
+                    forgotPasswordLink.style.display = 'block';
+                }
+                if (data.lockout_time) {
+                    showLockout(data.failed_attempts, data.lockout_time);
+                }
             }
         } catch (err) {
             serverError.textContent = 'Network error. Please check your connection.';
@@ -162,6 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Modal Controls
     function openFpModal() {
         if (fpOverlay) {
+            fpOverlay.style.display = 'flex'; // Ensure visible even with inline style
             fpOverlay.classList.add('active');
             showFpStep('fpStep1');
             if (fpUserIdInput) {
@@ -172,7 +186,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function closeFpModal() {
-        if (fpOverlay) fpOverlay.classList.remove('active');
+        if (fpOverlay) {
+            fpOverlay.style.display = 'none';
+            fpOverlay.classList.remove('active');
+        }
     }
 
     if (forgotLinks.length > 0) {

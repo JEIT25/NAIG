@@ -61,7 +61,7 @@ $role = 'consumer'; // Forced
 
 if ($id) {
     // UPDATE
-    $types = "sssssssssssssss";
+    $types = "ssssssissssssss"; // Correct order: age is 7th (i)
     $params = [
         $firstName, $lastName, $middleInitial, $extension, $sex, $birthdate, $age,
         $purok, $barangay, $city, $province, $zipCode, $country,

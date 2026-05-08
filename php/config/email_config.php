@@ -9,9 +9,9 @@ function getEmailConfig()
 {
     return [
         'mailjet' => [
-            'api_key' => 'e324fa9aab609ddbf62952a7bc5e822e',
-            'api_secret' => '56f145204ff4cd591e9838987bb037a9',
-            'sender_email' => 'carriemaejm.naig@csucc.edu.ph',
+            'api_key' => 'f00773edb6a05fc5eb899227a4fa61f0',
+            'api_secret' => '8cb1cf91893d7e85e98911674046470f',
+            'sender_email' => 'carriemaejmn@gmail.com',
             'sender_name' => 'NAIGO'
         ]
     ];
@@ -115,8 +115,7 @@ function sendViaMailjet($to, $otp, $config)
 
     if ($http_code === 200 || $http_code === 201) {
         return true;
-    }
-    else {
+    } else {
         error_log("Mailjet API Error: HTTP $http_code. Response: $response. Curl Error: $curl_error");
         return false;
     }

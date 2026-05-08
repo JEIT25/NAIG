@@ -36,11 +36,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $user = $result->fetch_assoc();
 
         $correct_count = 0;
-        if (strtolower($ans1) === strtolower($user['secure_answer']))
+        if (password_verify($ans1, $user['secure_answer']))
             $correct_count++;
-        if (strtolower($ans2) === strtolower($user['secure_answer2']))
+        if (password_verify($ans2, $user['secure_answer2']))
             $correct_count++;
-        if (strtolower($ans3) === strtolower($user['secure_answer3']))
+        if (password_verify($ans3, $user['secure_answer3']))
             $correct_count++;
 
         if ($correct_count >= 2) {

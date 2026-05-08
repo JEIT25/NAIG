@@ -5,6 +5,26 @@
  * After requireLogin/requireRole: $user, $userRole, hasRole(), isAdmin(), isSuperadmin() available.
  */
 
+require_once __DIR__ . '/../database/db_connect.php';
+global $conn;
+
+if (!function_exists('logUserAction')) {
+    /** Log user login/logout actions. */
+    function logUserAction($user_id, $action)
+    {
+        global $conn;
+        if (!$conn) return;
+        try {
+            $stmt = $conn->prepare("INSERT INTO login_logs (user_id, action) VALUES (?, ?)");
+            $stmt->bind_param('ss', $user_id, $action);
+            $stmt->execute();
+            $stmt->close();
+        } catch (Exception $e) {
+            // Silently fail logging
+        }
+    }
+}
+
 if (!function_exists('getBaseUrl')) {
     /**
      * Base URL for the app (no trailing slash).
@@ -33,7 +53,35 @@ if (!function_exists('requireLogin')) {
             header('Location: ' . getBaseUrl() . '/php/auth/login.php');
             exit;
         }
+
+        // Real-time block check (ported from CEDULA)
         $user = $_SESSION['user'];
+        global $conn;
+
+        if ($conn) {
+            $stmt = $conn->prepare("SELECT is_blocked, role FROM users WHERE id = ?");
+            $stmt->bind_param('s', $user['id']);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            if ($row = $res->fetch_assoc()) {
+                if ((int)$row['is_blocked'] === 1) {
+                    $role = $row['role'] ?? 'consumer';
+                    $uid = $user['id'];
+                    logUserAction($uid, 'logout');
+                    session_destroy();
+                    $err = ($role === 'consumer') ? 'blocked_consumer' : 'blocked_admin';
+                    header('Location: ' . getBaseUrl() . '/php/auth/login.php?error=' . $err);
+                    exit;
+                }
+                // Keep session role in sync with DB
+                if (!empty($row['role']) && $row['role'] !== $user['role']) {
+                    $_SESSION['user']['role'] = $row['role'];
+                    $user['role'] = $row['role'];
+                }
+            }
+            $stmt->close();
+        }
+
         $GLOBALS['user'] = $user;
         $GLOBALS['userRole'] = $user['role'] ?? 'consumer';
         return $user;
