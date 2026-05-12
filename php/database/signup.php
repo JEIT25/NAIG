@@ -85,15 +85,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 purok, barangay, city, province, zipCode, country,
                 username, email, password, birthdate, age,
                 secure_question, secure_answer, secure_question2, secure_answer2,
-                secure_question3, secure_answer3, role, is_blocked
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                secure_question3, secure_answer3, role, is_blocked, status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($sql);
 
     if ($stmt) {
         $isBlocked = 1; // pending approval
+        $status = 'pending';
         $stmt->bind_param(
-            'sssssssssssssssssssssssi', // 24 params: 23 strings, 1 int (is_blocked)
+            'sssssssssssssssssssssssis', // 25 params: 24 strings, 1 int
             $id,
             $firstName,
             $lastName,
@@ -117,7 +118,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $secure_question3,
             $secure_answer3Hashed,
             $role,
-            $isBlocked
+            $isBlocked,
+            $status
         );
 
         if ($stmt->execute()) {

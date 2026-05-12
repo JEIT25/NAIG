@@ -37,8 +37,12 @@ try {
 
             // Apply block or unblock based on request_type
             $isBlocked = ($request_type === 'unblock') ? 0 : 1;
-            $stmt2 = $conn->prepare("UPDATE users SET is_blocked = ? WHERE id = ?");
-            $stmt2->bind_param('is', $isBlocked, $target_id);
+            if ($isBlocked === 0) {
+                $stmt2 = $conn->prepare("UPDATE users SET is_blocked = 0, status = 'registered' WHERE id = ?");
+            } else {
+                $stmt2 = $conn->prepare("UPDATE users SET is_blocked = 1 WHERE id = ?");
+            }
+            $stmt2->bind_param('s', $target_id);
             $stmt2->execute();
             $stmt2->close();
         }

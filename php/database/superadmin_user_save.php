@@ -119,19 +119,20 @@ else {
         $secure_question = $secure_question2 = $secure_question3 = null;
     }
 
+    $status = 'registered';
     $sql = "INSERT INTO users (
                 id, firstName, lastName, middleInitial, extension, sex, birthdate, age,
                 purok, barangay, city, province, zipCode, country,
-                username, email, password, role,
+                username, email, password, role, status,
                 secure_question, secure_answer, secure_question2, secure_answer2, secure_question3, secure_answer3
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($sql);
     $stmt->bind_param(
-        'sssssssissssssssssssssss',
+        'sssssssisssssssssssssssss',
         $newId, $firstName, $lastName, $middleInitial, $extension, $sex, $birthdate, $age,
         $purok, $barangay, $city, $province, $zipCode, $country,
-        $username, $email, $hashedPassword, $role,
+        $username, $email, $hashedPassword, $role, $status,
         $secure_question, $ans1, $secure_question2, $ans2, $secure_question3, $ans3
     );
 }

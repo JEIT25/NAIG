@@ -89,7 +89,7 @@ try {
         if ($action === 'approve') {
             $targetId = $approval['target_id'];
             if ($actionType === 'register_consumer') {
-                $upd = $conn->prepare("UPDATE users SET is_blocked = 0 WHERE id = ?");
+                $upd = $conn->prepare("UPDATE users SET is_blocked = 0, status = 'registered' WHERE id = ?");
                 $upd->bind_param('s', $targetId);
                 $upd->execute();
                 $upd->close();
