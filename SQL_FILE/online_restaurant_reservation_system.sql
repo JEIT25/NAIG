@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 08, 2026 at 11:40 AM
+-- Generation Time: May 12, 2026 at 02:51 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -69,7 +69,8 @@ CREATE TABLE `approvals` (
 --
 
 INSERT INTO `approvals` (`id`, `requested_by`, `action_type`, `target_type`, `target_id`, `reason`, `status`, `reviewed_by`, `review_notes`, `created_at`, `updated_at`) VALUES
-(4, '1234-5678', 'register_consumer', 'user', '1234-5678', 'New consumer registration', 'approved', '0001-0004', '', '2026-05-08 00:55:14', '2026-05-08 00:58:57');
+(4, '1234-5678', 'register_consumer', 'user', '1234-5678', 'New consumer registration', 'approved', '0001-0004', '', '2026-05-08 00:55:14', '2026-05-08 00:58:57'),
+(7, '2222-2222', 'register_consumer', 'user', '2222-2222', 'New consumer registration', 'pending', NULL, NULL, '2026-05-11 09:56:46', '2026-05-11 09:56:46');
 
 -- --------------------------------------------------------
 
@@ -487,6 +488,7 @@ CREATE TABLE `users` (
   `secure_answer3` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `role` enum('consumer','admin','superadmin') NOT NULL DEFAULT 'consumer',
+  `status` varchar(20) DEFAULT 'registered',
   `is_blocked` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -494,10 +496,11 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `firstName`, `lastName`, `middleInitial`, `extension`, `sex`, `birthdate`, `age`, `purok`, `barangay`, `city`, `province`, `zipCode`, `country`, `username`, `email`, `password`, `secure_question`, `secure_answer`, `secure_question2`, `secure_answer2`, `secure_question3`, `secure_answer3`, `created_at`, `role`, `is_blocked`) VALUES
-('0001-0002', 'Clark', 'Naig', 'N', '', 'male', '1990-06-20', 35, 'Purok 2', 'Barangay 2', 'Cabadbaran City', 'Agusan Del Norte', '8605', 'Philippines', 'clark21', 'clark@gmail.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '1. Who is your bestfriend in elementary? *', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '2. What is the name of your pet? *', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '3. Who is your favorite teacher in highschool? *', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '2026-02-25 16:17:36', 'superadmin', 0),
-('0001-0004', 'Psynil', 'Naig', '', '', 'male', '2001-07-22', 24, 'Purok 4', 'Barangay 4', 'Cabadbaran City', 'Agusan Del Norte', '8605', 'Philippines', 'pysnil21', 'psynill@gmail.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '1. Who is your bestfriend in elementary? *', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '2. What is the name of your pet? *', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '3. Who is your favorite teacher in highschool? *', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '2026-02-25 16:17:36', 'consumer', 0),
-('1234-5678', 'Jaira', 'Naig', '', '', 'female', '2003-02-02', 23, 'Purok 5', 'Baranggay 6', 'City of Cabadbaran', 'Agusan Del Norte', '8605', 'Philippines', 'jaira21', 'jaira21@gmail.com', '$2y$10$mE8gl.6Biun3IeIIfLeoNO1Wb/4J0NzWNFqAysIocpwn04Ry/y6vO', 'What is the name of your pet?', '$2y$10$RkDJNPtwonm77rLUc9lBPOURIhrzDwOLmB/L1eM7UfMfoO.vicAsC', 'What is your favorite food?', '$2y$10$0W.RvWsXTUKHy9j/gp.7ue.ZcOan6FRrr/d5KkOnEy7pF4.7Bh0om', 'What is your favorite movie?', '$2y$10$/ziyyFQ5m5DTR3zK6u2mQuUD3LBeGtlrCiuz1tf2XHibpod1yFpiO', '2026-05-08 00:55:14', 'admin', 0);
+INSERT INTO `users` (`id`, `firstName`, `lastName`, `middleInitial`, `extension`, `sex`, `birthdate`, `age`, `purok`, `barangay`, `city`, `province`, `zipCode`, `country`, `username`, `email`, `password`, `secure_question`, `secure_answer`, `secure_question2`, `secure_answer2`, `secure_question3`, `secure_answer3`, `created_at`, `role`, `status`, `is_blocked`) VALUES
+('0001-0002', 'Clark', 'Naig', 'N', '', 'male', '1990-06-20', 35, 'Purok 2', 'Barangay 2', 'Cabadbaran City', 'Agusan Del Norte', '8605', 'Philippines', 'clark21', 'clark@gmail.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '1. Who is your bestfriend in elementary? *', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '2. What is the name of your pet? *', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '3. Who is your favorite teacher in highschool? *', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '2026-02-25 16:17:36', 'superadmin', 'registered', 0),
+('0001-0004', 'Psynil', 'Naig', '', '', 'male', '2001-07-22', 24, 'Purok 4', 'Barangay 4', 'Cabadbaran City', 'Agusan Del Norte', '8605', 'Philippines', 'pysnil21', 'psynill@gmail.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '1. Who is your bestfriend in elementary? *', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '2. What is the name of your pet? *', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '3. Who is your favorite teacher in highschool? *', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '2026-02-25 16:17:36', 'consumer', 'registered', 0),
+('1234-5678', 'Jaira', 'Naig', '', '', 'female', '2003-02-02', 23, 'Purok 5', 'Baranggay 6', 'City of Cabadbaran', 'Agusan Del Norte', '8605', 'Philippines', 'jaira21', 'jaira21@gmail.com', '$2y$10$mE8gl.6Biun3IeIIfLeoNO1Wb/4J0NzWNFqAysIocpwn04Ry/y6vO', 'What is the name of your pet?', '$2y$10$RkDJNPtwonm77rLUc9lBPOURIhrzDwOLmB/L1eM7UfMfoO.vicAsC', 'What is your favorite food?', '$2y$10$0W.RvWsXTUKHy9j/gp.7ue.ZcOan6FRrr/d5KkOnEy7pF4.7Bh0om', 'What is your favorite movie?', '$2y$10$/ziyyFQ5m5DTR3zK6u2mQuUD3LBeGtlrCiuz1tf2XHibpod1yFpiO', '2026-05-08 00:55:14', 'admin', 'registered', 0),
+('2222-2222', 'Test', 'Test', '', '', 'male', '2003-02-02', 23, 'Purok 5', 'Baranggay 6', 'City of Cabadbaran', 'Agusan Del Norte', '8605', 'Philippines', 'test1', 'lits@csucc.edu.ph', '$2y$10$G59lDQ98s2TsAKxpuZaA8OnA7ySPmVk54jD6z3jC9106GPku/cR2K', 'Who is your bestfriend in elementary?', '$2y$10$sH3KW9m73pYuehTw6JFK3.sJn83ROSLIyJImAI4k6Rmu6qNZW0SJG', 'What is your favorite food?', '$2y$10$6Z6gFcpxFD/9CvZGuiIbOOuSb0QgIiGoZWITWp5IqiKU5O4L/P0li', 'What street did you grow up on?', '$2y$10$unYy4CYg9U2sJNmHt1uLlOX1vhywbc52/1x6mn7BKgwq5uxiJZkKq', '2026-05-11 09:56:46', 'consumer', 'pending', 1);
 
 -- --------------------------------------------------------
 
@@ -676,7 +679,7 @@ ALTER TABLE `admin_creation_requests`
 -- AUTO_INCREMENT for table `approvals`
 --
 ALTER TABLE `approvals`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `cart`
