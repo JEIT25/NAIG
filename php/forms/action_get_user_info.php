@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $stmt = $conn->prepare("SELECT id, firstName, lastName, email, is_blocked FROM users WHERE id = ?");
+    $stmt = $conn->prepare("SELECT id, firstName, lastName, email, username, is_blocked FROM users WHERE id = ?");
     $stmt->bind_param('s', $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -38,19 +38,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         // --- END NEW ---
 
-        // Mask the email for security (e.g., j*****@gmail.com)
-        $email_parts = explode('@', $user['email']);
-        $name_part = $email_parts[0];
-        $domain_part = $email_parts[1];
-        $masked_email = substr($name_part, 0, 1) . '*****' . substr($name_part, -1) . '@' . $domain_part;
-
         echo json_encode([
             'success' => true,
             'user' => [
                 'id' => $user['id'],
                 'name' => $user['firstName'] . ' ' . $user['lastName'],
-                'email' => $masked_email, // Send masked email to frontend
-                'real_email' => $user['email'] // Send real email if needed for debugging or internal use, but ideally we only show masked
+                'username' => $user['username'],
+                'email' => $user['email']
             ]
         ]);
 

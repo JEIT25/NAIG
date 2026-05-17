@@ -163,7 +163,7 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
                 <!-- STEP 1: Personal Info -->
                 <div class="form-step" id="step0">
                     <fieldset>
-                        <legend>Personal Information (Step 1 of 4)</legend>
+                        <legend>Personal Information (Step 1 of 3)</legend>
                         <div class="form-grid">
                             <div class="form-group">
                                 <label style="font-weight:600; font-size:0.9rem; margin-bottom:0.4rem; display:block;">Id No <span style="color:#64748b; font-weight:normal; font-size:0.8rem;">(xxxx-xxxx)</span></label>
@@ -215,7 +215,7 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
                 <!-- STEP 2: Address -->
                 <div class="form-step" id="step1" style="display:none;">
                     <fieldset>
-                        <legend>Address (Step 2 of 4)</legend>
+                        <legend>Address (Step 2 of 3)</legend>
                         <div class="form-grid">
                             <div class="form-group">
                                 <label style="font-weight:600; font-size:0.9rem; margin-bottom:0.4rem; display:block;">Purok</label>
@@ -254,7 +254,7 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
                 <!-- STEP 3: Credentials -->
                 <div class="form-step" id="step2" style="display:none;">
                     <fieldset>
-                        <legend>Credentials (Step 3 of 4)</legend>
+                        <legend>Credentials (Step 3 of 3)</legend>
                         <div class="form-grid">
                             <div class="form-group">
                                 <label style="font-weight:600; font-size:0.9rem; margin-bottom:0.4rem; display:block;">Username <span style="color:red;">*</span></label>
@@ -282,72 +282,7 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
                     </fieldset>
                 </div>
 
-                <!-- STEP 4: Security -->
-                <div class="form-step" id="step3" style="display:none;">
-                    <fieldset id="securitySection">
-                        <legend>Security Questions (Step 4 of 4)</legend>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label style="font-weight:600; font-size:0.9rem; margin-bottom:0.4rem; display:block;">Question 1 <span class="hint" style="font-weight:normal; font-size:0.8rem; color:#64748b;">(Optional)</span></label>
-                                <select name="secure_question" id="sq1">
-                                    <option value="">-- Choose --</option>
-                                    <option value="Who is your bestfriend in elementary?">Who is your bestfriend in elementary?</option>
-                                    <option value="What is the name of your pet?">What is the name of your pet?</option>
-                                    <option value="Who is your favorite teacher in highschool?">Who is your favorite teacher in highschool?</option>
-                                    <option value="In what city were you born?">In what city were you born?</option>
-                                </select>
-                                <span class="validation-message" id="sq1Error"></span>
-                            </div>
-                            <div class="form-group">
-                                <label style="font-weight:600; font-size:0.9rem; margin-bottom:0.4rem; display:block;">Answer 1 <span class="hint" style="font-weight:normal; font-size:0.8rem; color:#64748b;">(Optional)</span></label>
-                                <div class="password-container" style="position:relative;">
-                                    <input type="password" name="secure_answer" id="sa1" style="padding-right:2.5rem;">
-                                    <i class="fa-solid fa-eye eye-icon" onclick="toggleAnswerVisibility(this)" style="position:absolute; right:1rem; top:50%; transform:translateY(-50%); cursor:pointer; color:#94a3b8;"></i>
-                                </div>
-                                <span class="validation-message" id="sa1Error"></span>
-                            </div>
-                            <div class="form-group">
-                                <label style="font-weight:600; font-size:0.9rem; margin-bottom:0.4rem; display:block;">Question 2 <span class="hint" style="font-weight:normal; font-size:0.8rem; color:#64748b;">(Optional)</span></label>
-                                <select name="secure_question2" id="sq2">
-                                    <option value="">-- Choose --</option>
-                                    <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
-                                    <option value="What elementary school did you attend?">What elementary school did you attend?</option>
-                                    <option value="What is your favorite food?">What is your favorite food?</option>
-                                    <option value="What is the name of your best friend?">What is the name of your best friend?</option>
-                                </select>
-                                <span class="validation-message" id="sq2Error"></span>
-                            </div>
-                            <div class="form-group">
-                                <label style="font-weight:600; font-size:0.9rem; margin-bottom:0.4rem; display:block;">Answer 2 <span class="hint" style="font-weight:normal; font-size:0.8rem; color:#64748b;">(Optional)</span></label>
-                                <div class="password-container" style="position:relative;">
-                                    <input type="password" name="secure_answer2" id="sa2" style="padding-right:2.5rem;">
-                                    <i class="fa-solid fa-eye eye-icon" onclick="toggleAnswerVisibility(this)" style="position:absolute; right:1rem; top:50%; transform:translateY(-50%); cursor:pointer; color:#94a3b8;"></i>
-                                </div>
-                                <span class="validation-message" id="sa2Error"></span>
-                            </div>
-                            <div class="form-group">
-                                <label style="font-weight:600; font-size:0.9rem; margin-bottom:0.4rem; display:block;">Question 3 <span class="hint" style="font-weight:normal; font-size:0.8rem; color:#64748b;">(Optional)</span></label>
-                                <select name="secure_question3" id="sq3">
-                                    <option value="">-- Choose --</option>
-                                    <option value="What is your father's middle name?">What is your father's middle name?</option>
-                                    <option value="What street did you grow up on?">What street did you grow up on?</option>
-                                    <option value="What is your favorite movie?">What is your favorite movie?</option>
-                                    <option value="What year did you graduate high school?">What year did you graduate high school?</option>
-                                </select>
-                                <span class="validation-message" id="sq3Error"></span>
-                            </div>
-                            <div class="form-group">
-                                <label style="font-weight:600; font-size:0.9rem; margin-bottom:0.4rem; display:block;">Answer 3 <span class="hint" style="font-weight:normal; font-size:0.8rem; color:#64748b;">(Optional)</span></label>
-                                <div class="password-container" style="position:relative;">
-                                    <input type="password" name="secure_answer3" id="sa3" style="padding-right:2.5rem;">
-                                    <i class="fa-solid fa-eye eye-icon" onclick="toggleAnswerVisibility(this)" style="position:absolute; right:1rem; top:50%; transform:translateY(-50%); cursor:pointer; color:#94a3b8;"></i>
-                                </div>
-                                <span class="validation-message" id="sa3Error"></span>
-                            </div>
-                        </div>
-                        <p class="hint" style="margin-top: 1rem; font-style: italic; color: #64748b; font-size: 0.8rem;">Note: If you are editing an existing consumer, you can leave these blank to keep their current security settings.</p>
-                    </fieldset>
-                </div>
+
 
                 <div class="form-navigation" style="display:flex; justify-content:space-between; margin-top:1.5rem; border-top:1px solid #e2e8f0; padding-top:1.5rem;">
                     <button type="button" id="prevBtn" onclick="prevStep()" class="btn-secondary" style="display:none;">Previous Step</button>
@@ -434,7 +369,7 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
         let editingUserId = '';
         let usersMap = {};
         let currentStep = 0;
-        const totalSteps = 4;
+        const totalSteps = 3;
 
         function loadUsers(page = 1) {
             currentPage = page;
@@ -650,7 +585,6 @@ include __DIR__ . '/../includes/layout/sidebar.php'; ?>
         document.getElementById('consumerForm').onsubmit = async function(e) {
             e.preventDefault();
             const isEdit = !!editingUserId;
-            if (!AdminUserValidation.validateSecurityQuestions(isEdit)) return;
             if (!(await AdminUserValidation.validateAll(isEdit))) { showStep(0); return; }
 
             const fd = new FormData(this);

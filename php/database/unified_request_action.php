@@ -52,10 +52,31 @@ try {
             $row = $get->get_result()->fetch_assoc();
             $get->close();
 
+            $superadminSwap = false;
             if ($row) {
+                // Determine target role
+                $roleStmt = $conn->prepare("SELECT role FROM users WHERE id = ?");
+                $roleStmt->bind_param('s', $row['target_id']);
+                $roleStmt->execute();
+                $targetRole = $roleStmt->get_result()->fetch_assoc()['role'] ?? '';
+                $roleStmt->close();
+
                 $isBlocked = ($row['request_type'] === 'unblock') ? 0 : 1;
-                $upd = $conn->prepare("UPDATE users SET is_blocked = ? WHERE id = ?");
-                $upd->bind_param('is', $isBlocked, $row['target_id']);
+                if ($isBlocked === 0) {
+                    $upd = $conn->prepare("UPDATE users SET is_blocked = 0, status = 'registered' WHERE id = ?");
+                    
+                    if ($targetRole === 'superadmin') {
+                        $currId = $_SESSION['user']['id'];
+                        $blockCurr = $conn->prepare("UPDATE users SET is_blocked = 1 WHERE id = ?");
+                        $blockCurr->bind_param('s', $currId);
+                        $blockCurr->execute();
+                        $blockCurr->close();
+                        $superadminSwap = true;
+                    }
+                } else {
+                    $upd = $conn->prepare("UPDATE users SET is_blocked = 1 WHERE id = ?");
+                }
+                $upd->bind_param('s', $row['target_id']);
                 $upd->execute();
                 $upd->close();
             }
@@ -102,7 +123,7 @@ try {
     }
 
     $conn->commit();
-    echo json_encode(['success' => true]);
+    echo json_encode(['success' => true, 'superadmin_swap' => $superadminSwap ?? false]);
 
 }
 catch (Exception $e) {

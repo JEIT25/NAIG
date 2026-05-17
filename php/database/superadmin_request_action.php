@@ -35,10 +35,28 @@ try {
             $target_id = $row['target_id'];
             $request_type = $row['request_type'] ?? 'block';
 
+            $superadminSwap = false;
+            
+            // Determine target role
+            $roleStmt = $conn->prepare("SELECT role FROM users WHERE id = ?");
+            $roleStmt->bind_param('s', $target_id);
+            $roleStmt->execute();
+            $targetRole = $roleStmt->get_result()->fetch_assoc()['role'] ?? '';
+            $roleStmt->close();
+
             // Apply block or unblock based on request_type
             $isBlocked = ($request_type === 'unblock') ? 0 : 1;
             if ($isBlocked === 0) {
                 $stmt2 = $conn->prepare("UPDATE users SET is_blocked = 0, status = 'registered' WHERE id = ?");
+                
+                if ($targetRole === 'superadmin') {
+                    $currId = $_SESSION['user']['id'];
+                    $blockCurr = $conn->prepare("UPDATE users SET is_blocked = 1 WHERE id = ?");
+                    $blockCurr->bind_param('s', $currId);
+                    $blockCurr->execute();
+                    $blockCurr->close();
+                    $superadminSwap = true;
+                }
             } else {
                 $stmt2 = $conn->prepare("UPDATE users SET is_blocked = 1 WHERE id = ?");
             }
@@ -50,7 +68,7 @@ try {
     }
 
     $conn->commit();
-    echo json_encode(['success' => true]);
+    echo json_encode(['success' => true, 'superadmin_swap' => $superadminSwap ?? false]);
 
 }
 catch (Exception $e) {

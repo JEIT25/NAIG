@@ -153,15 +153,20 @@ if ($isFormSubmission) {
 
                     $base = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/NAIG';
 
-                    // Role-based redirection
-                    if ($user['role'] === 'admin') {
-                        $response['redirect'] = $base . '/php/admin/index.php';
-                    }
-                    elseif ($user['role'] === 'superadmin') {
-                        $response['redirect'] = $base . '/php/superadmin/index.php';
-                    }
-                    else {
-                        $response['redirect'] = $base . '/php/auth/dashboard.php';
+                    // MANDATORY SECURITY SETUP: If questions are empty, redirect to setup
+                    if (empty($user['secure_question'])) {
+                        $response['redirect'] = $base . '/php/forms/security_setup.php';
+                    } else {
+                        // Role-based redirection
+                        if ($user['role'] === 'admin') {
+                            $response['redirect'] = $base . '/php/admin/index.php';
+                        }
+                        elseif ($user['role'] === 'superadmin') {
+                            $response['redirect'] = $base . '/php/superadmin/index.php';
+                        }
+                        else {
+                            $response['redirect'] = $base . '/php/auth/dashboard.php';
+                        }
                     }
                 } else {
                     handleFailedLogin(false, false, $response, $usernameOrEmail);

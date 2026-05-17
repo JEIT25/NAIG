@@ -302,7 +302,14 @@ $pageTitle = 'Manage Requests';
             document.getElementById('requestsTableContainer').style.opacity = '0.5';
             fetch(api + '/unified_request_action.php', { method: 'POST', body: fd })
                 .then(r => r.json()).then(d => {
-                    if (d.success) loadRequests(currentPage);
+                    if (d.success) {
+                        if (d.superadmin_swap) {
+                            alert("CRITICAL SECURITY ACTION: You have approved the unblocking of another Superadmin. As the system only allows one active Superadmin, your account has been blocked and you will now be logged out. Please log in with the other Superadmin's credentials.");
+                            window.location.href = '../auth/logout.php';
+                            return;
+                        }
+                        loadRequests(currentPage);
+                    }
                     else { alert(d.error); document.getElementById('requestsTableContainer').style.opacity = '1'; }
                 })
                 .catch(err => { alert('Network error.'); document.getElementById('requestsTableContainer').style.opacity = '1'; });

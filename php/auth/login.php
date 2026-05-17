@@ -202,12 +202,25 @@ $baseUrl = getBaseUrl();
             <!-- STEP 2: Confirm User -->
             <div class="fp-step" id="fpStep2">
                 <div class="fp-icon"><i class="fa-solid fa-user-check"></i></div>
+                <div class="fp-user-info-header" style="background: #f8fafc; padding: 1.25rem; border-radius: 15px; margin-bottom: 1.5rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); display:none;">
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div class="fp-id-row" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px dashed #e2e8f0; margin-bottom: 4px;">
+                            <span style="font-size: 0.85rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.025em;">Account ID:</span>
+                            <span class="fp-val-id" style="font-family: 'Monaco', 'Consolas', monospace; font-weight: 800; color: #1e293b; background: #f1f5f9; padding: 4px 10px; border-radius: 6px; font-size: 1rem;"></span>
+                        </div>
+                        <div class="fp-extra-info" style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.85rem; font-weight: 700; color: #64748b;">Username:</span>
+                            <span class="fp-val-username" style="font-weight: 600; color: #334155;"></span>
+                        </div>
+                        <div class="fp-extra-info" style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.85rem; font-weight: 700; color: #64748b;">Email Address:</span>
+                            <span class="fp-val-email" style="font-weight: 600; color: #334155;"></span>
+                        </div>
+                    </div>
+                </div>
                 <h3>Confirm Account</h3>
                 <p class="fp-subtitle">Is this you? We'll send a code to this email.</p>
-                <div class="user-details-box" id="fpUserInfo"
-                    style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: left; border: 1px solid #e2e8f0;">
-                    <!-- Populated by JS -->
-                </div>
+
                 <button class="fp-btn" id="fpStep2Btn">YES, SEND CODE</button>
                 <button class="fp-btn" id="fpStep2Back" style="background:none; color:#64748b; margin-top:10px;">Not me?
                     Try again</button>
@@ -216,12 +229,34 @@ $baseUrl = getBaseUrl();
             <!-- STEP 3: Enter OTP -->
             <div class="fp-step" id="fpStep3">
                 <div class="fp-icon"><i class="fa-solid fa-envelope-open-text"></i></div>
+                <div class="fp-user-info-header" style="background: #f8fafc; padding: 1.25rem; border-radius: 15px; margin-bottom: 1.5rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); display:none;">
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div class="fp-id-row" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px dashed #e2e8f0; margin-bottom: 4px;">
+                            <span style="font-size: 0.85rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.025em;">Account ID:</span>
+                            <span class="fp-val-id" style="font-family: 'Monaco', 'Consolas', monospace; font-weight: 800; color: #1e293b; background: #f1f5f9; padding: 4px 10px; border-radius: 6px; font-size: 1rem;"></span>
+                        </div>
+                        <div class="fp-extra-info" style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.85rem; font-weight: 700; color: #64748b;">Username:</span>
+                            <span class="fp-val-username" style="font-weight: 600; color: #334155;"></span>
+                        </div>
+                        <div class="fp-extra-info" style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.85rem; font-weight: 700; color: #64748b;">Email Address:</span>
+                            <span class="fp-val-email" style="font-weight: 600; color: #334155;"></span>
+                        </div>
+                    </div>
+                </div>
                 <h3>Enter Verification Code</h3>
                 <p class="fp-subtitle">Please enter the 6-digit code sent to your email.</p>
                 <div class="form-group">
                     <label for="fpOtp">Verification Code</label>
-                    <input type="password" id="fpOtp" placeholder="000000" maxlength="6"
-                        style="text-align: center; letter-spacing: 0.2em; font-size: 1.2rem;">
+                    <div class="input-with-icon">
+                        <i class="fa-solid fa-key input-icon"></i>
+                        <input type="password" id="fpOtp" placeholder="000000" maxlength="6"
+                            style="text-align: center; letter-spacing: 0.2em; font-size: 1.2rem; padding-right: 45px;">
+                        <button type="button" class="password-toggle" id="toggleFpOtp" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #64748b;">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
                 <span id="fpStep3Error" class="error-text"></span>
                 <button class="fp-btn" id="fpStep3Btn">VERIFY CODE</button>
@@ -234,41 +269,75 @@ $baseUrl = getBaseUrl();
             <!-- Step 4: Security Questions -->
             <div id="fpStep4" class="fp-step">
                 <div class="fp-icon"><i class="fa-solid fa-question-circle"></i></div>
+                <div class="fp-user-info-header" style="background: #f8fafc; padding: 1.25rem; border-radius: 15px; margin-bottom: 1.5rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); display:none;">
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div class="fp-id-row" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px dashed #e2e8f0; margin-bottom: 4px;">
+                            <span style="font-size: 0.85rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.025em;">Account ID:</span>
+                            <span class="fp-val-id" style="font-family: 'Monaco', 'Consolas', monospace; font-weight: 800; color: #1e293b; background: #f1f5f9; padding: 4px 10px; border-radius: 6px; font-size: 1rem;"></span>
+                        </div>
+                        <div class="fp-extra-info" style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.85rem; font-weight: 700; color: #64748b;">Username:</span>
+                            <span class="fp-val-username" style="font-weight: 600; color: #334155;"></span>
+                        </div>
+                        <div class="fp-extra-info" style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.85rem; font-weight: 700; color: #64748b;">Email Address:</span>
+                            <span class="fp-val-email" style="font-weight: 600; color: #334155;"></span>
+                        </div>
+                    </div>
+                </div>
                 <h3>Security Questions</h3>
                 <p class="fp-subtitle">Please answer your security questions to continue.</p>
                 <div id="fpQuestionsContainer">
                     <div class="form-group" style="text-align: left; margin-bottom: 15px;">
-                        <label id="fpQLabel1"
-                            style="font-size: 0.85rem; color: #64748b; margin-bottom: 5px; display: block;">Question
-                            1</label>
+                        <label>Security Question 1</label>
+                        <select id="forgotQ1" class="form-control" style="margin-bottom: 10px; width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                            <option value="">-- Choose a Question --</option>
+                            <option value="Who is your bestfriend in elementary?">Who is your bestfriend in elementary?</option>
+                            <option value="What is the name of your pet?">What is the name of your pet?</option>
+                            <option value="Who is your favorite teacher in highschool?">Who is your favorite teacher in highschool?</option>
+                            <option value="What was your first car?">What was your first car?</option>
+                            <option value="In what city were you born?">In what city were you born?</option>
+                        </select>
                         <div class="input-with-icon">
                             <i class="fa-solid fa-shield-halved input-icon"></i>
                             <input type="password" id="fpAns1" class="form-control" placeholder="Your answer">
-                            <button type="button" class="password-toggle fp-toggle" aria-label="Toggle visibility">
+                            <button type="button" class="password-toggle fp-toggle" id="toggleFpAns1" aria-label="Toggle visibility">
                                 <i class="fa-solid fa-eye"></i>
                             </button>
                         </div>
                     </div>
                     <div class="form-group" style="text-align: left; margin-bottom: 15px;">
-                        <label id="fpQLabel2"
-                            style="font-size: 0.85rem; color: #64748b; margin-bottom: 5px; display: block;">Question
-                            2</label>
+                        <label>Security Question 2</label>
+                        <select id="forgotQ2" class="form-control" style="margin-bottom: 10px; width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                            <option value="">-- Choose a Question --</option>
+                            <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
+                            <option value="What elementary school did you attend?">What elementary school did you attend?</option>
+                            <option value="What is your favorite food?">What is your favorite food?</option>
+                            <option value="What was your childhood nickname?">What was your childhood nickname?</option>
+                            <option value="What is the name of your best friend?">What is the name of your best friend?</option>
+                        </select>
                         <div class="input-with-icon">
                             <i class="fa-solid fa-shield-halved input-icon"></i>
                             <input type="password" id="fpAns2" class="form-control" placeholder="Your answer">
-                            <button type="button" class="password-toggle fp-toggle" aria-label="Toggle visibility">
+                            <button type="button" class="password-toggle fp-toggle" id="toggleFpAns2" aria-label="Toggle visibility">
                                 <i class="fa-solid fa-eye"></i>
                             </button>
                         </div>
                     </div>
                     <div class="form-group" style="text-align: left; margin-bottom: 15px;">
-                        <label id="fpQLabel3"
-                            style="font-size: 0.85rem; color: #64748b; margin-bottom: 5px; display: block;">Question
-                            3</label>
+                        <label>Security Question 3</label>
+                        <select id="forgotQ3" class="form-control" style="margin-bottom: 10px; width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                            <option value="">-- Choose a Question --</option>
+                            <option value="What is your father's middle name?">What is your father's middle name?</option>
+                            <option value="What street did you grow up on?">What street did you grow up on?</option>
+                            <option value="What is your favorite movie?">What is your favorite movie?</option>
+                            <option value="What is the name of your first pet?">What is the name of your first pet?</option>
+                            <option value="What year did you graduate high school?">What year did you graduate high school?</option>
+                        </select>
                         <div class="input-with-icon">
                             <i class="fa-solid fa-shield-halved input-icon"></i>
                             <input type="password" id="fpAns3" class="form-control" placeholder="Your answer">
-                            <button type="button" class="password-toggle fp-toggle" aria-label="Toggle visibility">
+                            <button type="button" class="password-toggle fp-toggle" id="toggleFpAns3" aria-label="Toggle visibility">
                                 <i class="fa-solid fa-eye"></i>
                             </button>
                         </div>

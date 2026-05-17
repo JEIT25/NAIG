@@ -18,6 +18,7 @@ $basePath = getBasePath(__FILE__);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="<?php echo $basePath; ?>css/serve_asset.php?file=design-system.css">
     <link rel="stylesheet" href="<?php echo $basePath; ?>css/serve_asset.php?file=login.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <title>Forgot Password - FoodGrab</title>
     <style>
         .step-container { display: none; }
@@ -97,15 +98,24 @@ $basePath = getBasePath(__FILE__);
 
             <!-- STEP 3: Verify OTP -->
             <div id="step3" class="step-container">
+                <div id="step3IdentityHeader" style="background: #eff6ff; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; text-align: left; border-left: 4px solid var(--primary-color);">
+                    <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 0.25rem;">Recovering account for:</div>
+                    <div id="persistentName" style="font-weight: 800; color: #1e3a8a; font-size: 1.1rem;"></div>
+                    <div id="persistentDetails" style="font-size: 0.85rem; color: #3b82f6; font-weight: 600;"></div>
+                </div>
+
                 <h3>Enter Verification Code</h3>
                 <p>Please enter the 6-digit code sent to your email.</p>
 
                 <form id="formStep3" onsubmit="handleStep3(event)">
                     <div class="form-group">
                         <label for="otp_code">Verification Code:</label>
-                        <input type="password" id="otp_code" name="otp_code" required
-                               placeholder="000000" maxlength="6" pattern="[0-9]{6}"
-                               autocomplete="one-time-code" style="text-align: center; letter-spacing: 0.5em; font-size: 1.25rem;">
+                        <div style="position: relative;">
+                            <input type="password" id="otp_code" name="otp_code" required
+                                   placeholder="000000" maxlength="6" pattern="[0-9]{6}"
+                                   autocomplete="one-time-code" style="text-align: center; letter-spacing: 0.5em; font-size: 1.25rem; padding-right: 45px;">
+                            <i class="fa-solid fa-eye" id="toggleOtp" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8;"></i>
+                        </div>
                     </div>
 
                     <button type="submit" class="btn-primary" id="btnVerify">Verify Code</button>
@@ -157,6 +167,8 @@ $basePath = getBasePath(__FILE__);
             showStep('step1');
         }
 
+        let userData = null;
+
         // --- STEP 1: Fetch User Info ---
         async function handleStep1(e) {
             e.preventDefault();
@@ -182,12 +194,17 @@ $basePath = getBasePath(__FILE__);
                 const data = await response.json();
 
                 if (data.success) {
+                    userData = data.user;
                     // Populate User Card
                     const card = document.getElementById('userInfoCard');
                     card.innerHTML = `
                         <div class="user-card-row">
                             <span class="user-card-label">ID Number</span>
                             <span class="user-card-value">${data.user.id}</span>
+                        </div>
+                        <div class="user-card-row">
+                            <span class="user-card-label">Username</span>
+                            <span class="user-card-value">@${data.user.username}</span>
                         </div>
                         <div class="user-card-row">
                             <span class="user-card-label">Name</span>
@@ -198,6 +215,11 @@ $basePath = getBasePath(__FILE__);
                             <span class="user-card-value">${data.user.email}</span>
                         </div>
                     `;
+                    
+                    // Populate persistent headers
+                    document.getElementById('persistentName').textContent = data.user.name;
+                    document.getElementById('persistentDetails').textContent = `ID: ${data.user.id} | @${data.user.username} | ${data.user.email}`;
+
                     showStep('step2');
                 } else {
                     showError(data.message || 'User not found');
@@ -210,6 +232,17 @@ $basePath = getBasePath(__FILE__);
                 btn.textContent = 'Verify Identity';
             }
         }
+
+        document.getElementById('toggleOtp').onclick = function() {
+            const input = document.getElementById('otp_code');
+            if (input.type === 'password') {
+                input.type = 'text';
+                this.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                this.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        };
 
         // --- STEP 2: Send OTP ---
         async function sendOTP() {

@@ -20,13 +20,36 @@ if ($user_id === $_SESSION['user']['id']) {
     exit;
 }
 
-$is_blocked = ($action === 'block') ? 1 : 0;
 
-$stmt = $conn->prepare("UPDATE users SET is_blocked = ? WHERE id = ?");
-$stmt->bind_param('is', $is_blocked, $user_id);
+
+$superadminSwap = false;
+
+// Determine target role for unblock superadmin logic
+$roleStmt = $conn->prepare("SELECT role FROM users WHERE id = ?");
+$roleStmt->bind_param('s', $user_id);
+$roleStmt->execute();
+$targetRole = $roleStmt->get_result()->fetch_assoc()['role'] ?? '';
+$roleStmt->close();
+
+if ($action === 'unblock') {
+    $stmt = $conn->prepare("UPDATE users SET is_blocked = 0, status = 'registered' WHERE id = ?");
+    $stmt->bind_param('s', $user_id);
+    
+    if ($targetRole === 'superadmin') {
+        $currId = $_SESSION['user']['id'];
+        $blockCurr = $conn->prepare("UPDATE users SET is_blocked = 1 WHERE id = ?");
+        $blockCurr->bind_param('s', $currId);
+        $blockCurr->execute();
+        $blockCurr->close();
+        $superadminSwap = true;
+    }
+} else {
+    $stmt = $conn->prepare("UPDATE users SET is_blocked = 1 WHERE id = ?");
+    $stmt->bind_param('s', $user_id);
+}
 
 if ($stmt->execute()) {
-    echo json_encode(['success' => true]);
+    echo json_encode(['success' => true, 'superadmin_swap' => $superadminSwap]);
 }
 else {
     echo json_encode(['success' => false, 'error' => 'Database error']);
